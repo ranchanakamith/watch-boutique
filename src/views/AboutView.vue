@@ -17,8 +17,9 @@
       
       <div class="relative w-32 h-32 mx-auto mb-10 rounded-full border-2 border-theme-gold p-1 shadow-lg dark:shadow-none overflow-hidden transition-all duration-700">
         <img 
-          src="C:\Users\User\vueapp\watch-boutique\watch-boutique\src\assets\my-photo.jpeg" 
+          src="../assets/my-photo.jpg" 
           class="w-full h-full rounded-full object-cover  hover:grayscale-0 transition-all duration-700" 
+          alt="Profile Photo"
         />
       </div>
 
@@ -47,3 +48,7 @@
 
   </div>
 </template>
+
+<script setup lang="ts">
+// No extra imports needed for the image when using a relative path directly in the template
+</script>
