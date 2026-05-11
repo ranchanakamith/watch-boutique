@@ -12,7 +12,7 @@ const { cart, removeFromCart, clearCart, cartTotal, cartItemCount } = useCart();
 const { wishlist, toggleWishlist, removeFromWishlist, clearWishlist } = useWishlist();
 const { isAuthenticated, user, isLoading, login, register, logout } = useAuth();
 
-const isDarkMode = ref(true); 
+const isDarkMode = ref(false); 
 const isCartOpen = ref(false);
 const isWishlistOpen = ref(false);
 
@@ -64,7 +64,11 @@ const handleAuthSubmit = async () => {
 };
 
 onMounted(() => {
-  if (isDarkMode.value) document.documentElement.classList.add('dark');
+  if (isDarkMode.value) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
 });
 </script>
 
