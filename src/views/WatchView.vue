@@ -107,7 +107,7 @@ onMounted(() => {
           <div class="flex flex-col sm:flex-row gap-4 w-full">
             <button @click="handleAddToCart" 
                     :class="[
-                      'flex-1 py-4 text-xs uppercase tracking-[0.2em] transition-all duration-300 border active:scale-[0.98]',
+                      'flex-1 py-4 text-xs uppercase tracking-[0.2em] transition-all duration-300 border rounded-full border active:scale-[0.98]',
                       isAddingToBag ? 'bg-theme-gold border-theme-gold text-white dark:text-theme-bg' : 'bg-transparent rounded-full border  border-gray-900 dark:border-white text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white dark:hover:text-theme-bg'
                     ]">
               {{ isAddingToBag ? 'Added to Bag ✓' : 'Add to Bag' }}

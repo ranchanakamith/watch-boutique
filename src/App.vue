@@ -96,8 +96,8 @@ onMounted(() => {
       <div class="w-[1px] h-3 bg-gray-300 dark:bg-gray-700 hidden sm:block"></div>
 
       <button @click="toggleTheme" class="text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors">
-        <span v-if="isDarkMode">☀ Light</span>
-        <span v-else>☾ Dark</span>
+        <span v-if="isDarkMode">☀Light</span>
+        <span v-else> ☾        Dark </span>
       </button>
 
       <button @click="isWishlistOpen = true" class="relative text-gray-500 hover:text-theme-gold transition-colors">
@@ -174,14 +174,15 @@ onMounted(() => {
 
    <div v-if="isWishlistOpen" @click="isWishlistOpen = false" class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40 transition-opacity duration-500"></div>
     
-    <div class="fixed top-0 right-0 h-full w-80 md:w-96 backdrop-blur-2xl bg-white/40 dark:bg-theme-bg/50 shadow-[-20px_0_40px_rgba(0,0,0,0.08)] z-50 transform transition-transform duration-700 ease-in-out border-l border-white/50 dark:border-white/10 rounded-l-3xl p-8 flex flex-col" :class="isWishlistOpen ? 'translate-x-0' : 'translate-x-full'">
+    <div class="fixed top-0 right-0 h-full w-80 md:w-96 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 shadow-[20px_0_40px_rgba(0,0,0,0.08)] z-50 transform transition-transform duration-700 ease-in-out border-l border-gray-200/50 dark:border-white/10 rounded-l-3xl p-8 flex flex-col" :class="isWishlistOpen ? 'translate-x-0' : 'translate-x-full'">
+                                                        
       <div class="flex justify-between items-center mb-8">
         <h3 class="font-serif text-2xl font-light">Wishlist</h3>
         <button @click="isWishlistOpen = false" class="text-2xl font-light hover:text-theme-gold transition-colors">&times;</button>
       </div>
       <div v-if="wishlist.length === 0" class="text-gray-500 text-sm font-light uppercase tracking-widest text-center mt-10">Your wishlist is empty.</div>
       <div v-if="wishlist.length > 0" class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100 dark:border-white/10">
-        <span class="text-[10px] uppercase tracking-[0.2em] text-gray-400">{{ wishlist.length }} Items</span>
+        <span class="text-[10px] uppercase tracking-[0.2em] text-gray-900">{{ wishlist.length }} Items</span>
         <button @click="clearWishlist" class="text-[10px] uppercase tracking-[0.2em] text-red-400 hover:text-red-600 transition-colors border-b border-transparent hover:border-red-600 pb-0.5">Clear Wishlist</button>
       </div>
       <div class="flex-grow overflow-y-auto space-y-6 pr-2">
@@ -190,7 +191,7 @@ onMounted(() => {
           <div class="flex flex-col justify-between flex-grow">
             <h4 class="text-sm font-serif truncate pr-4">{{ item.title }}</h4>
             <p class="text-theme-gold text-xs tracking-widest mt-1">${{ item.price.toLocaleString() }}</p>
-            <button @click="removeFromWishlist(item.id)" class="text-[9px] uppercase tracking-[0.2em] text-gray-400 self-start hover:text-red-500 transition-colors mt-2">Remove</button>
+            <button @click="removeFromWishlist(item.id)" class="text-[9px] uppercase tracking-[0.2em] text-gray-900 self-start hover:text-red-500 transition-colors mt-2">Remove</button>
           </div>
         </div>
       </div>
@@ -198,14 +199,15 @@ onMounted(() => {
 
     <div v-if="isCartOpen" @click="isCartOpen = false" class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40 transition-opacity duration-500"></div>
     
-    <div class="fixed top-0 right-0 h-full w-80 md:w-96 backdrop-blur-2xl bg-white/40 dark:bg-theme-bg/50 shadow-[-20px_0_40px_rgba(0,0,0,0.08)] z-50 transform transition-transform duration-700 ease-in-out border-l border-white/50 dark:border-white/10 rounded-l-3xl p-8 flex flex-col" :class="isCartOpen ? 'translate-x-0' : 'translate-x-full'">
+    <div class="fixed top-0 right-0 h-full w-80 md:w-96 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 shadow-[20px_0_40px_rgba(0,0,0,0.08)] z-50 transform transition-transform duration-700 ease-in-out border-l border-gray-200/50 dark:border-white/10 rounded-l-3xl p-8 flex flex-col" :class="isCartOpen ? 'translate-x-0' : 'translate-x-full'">
+     
       <div class="flex justify-between items-center mb-8">
         <h3 class="font-serif text-2xl font-light">Your Bag</h3>
         <button @click="isCartOpen = false" class="text-2xl font-light hover:text-theme-gold transition-colors">&times;</button>
       </div>
       <div v-if="cart.length === 0" class="text-gray-500 text-sm font-light uppercase tracking-widest text-center mt-10">Your bag is empty.</div>
       <div v-if="cart.length > 0" class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100 dark:border-white/10">
-        <span class="text-[10px] uppercase tracking-[0.2em] text-gray-400">{{ cartItemCount }} Items</span>
+        <span class="text-[10px] uppercase tracking-[0.2em] text-gray-900">{{ cartItemCount }} Items</span>
         <button @click="clearCart" class="text-[10px] uppercase tracking-[0.2em] text-red-400 hover:text-red-600 transition-colors border-b border-transparent hover:border-red-600 pb-0.5">Clear Bag</button>
       </div>
       <div class="flex-grow overflow-y-auto space-y-6 pr-2">
@@ -217,7 +219,7 @@ onMounted(() => {
               <p class="text-gray-500 text-xs">Qty: {{ item.quantity }}</p>
               <p class="text-theme-gold text-xs tracking-widest">${{ (item.price * item.quantity).toLocaleString() }}</p>
             </div>
-            <button @click="removeFromCart(item.id)" class="text-[9px] uppercase tracking-[0.2em] text-gray-400 self-start hover:text-red-500 transition-colors mt-2">Remove</button>
+            <button @click="removeFromCart(item.id)" class="text-[9px] uppercase tracking-[0.2em] text-gray-900 self-start hover:text-red-500 transition-colors mt-2">Remove</button>
           </div>
         </div>
       </div>
@@ -229,7 +231,7 @@ onMounted(() => {
         <button v-if="isAuthenticated" class="w-full bg-theme-gold text-white dark:text-theme-bg py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-theme-gold/80 transition-colors">
           Secure Checkout
         </button>
-        <button v-else @click="isCartOpen = false; openAuthModal('login')" class="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 py-4 text-xs uppercase tracking-[0.2em] font-medium hover:opacity-80 transition-opacity">
+        <button v-else @click="isCartOpen = false; openAuthModal('login')" class="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 py-4 text-xs uppercase rounded-full border tracking-[0.2em] font-medium hover:opacity-80 transition-opacity">
           Sign In to Checkout
         </button>
       </div>
