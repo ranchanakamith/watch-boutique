@@ -71,7 +71,7 @@ onMounted(() => {
 <template>
   <div class="min-h-screen transition-colors duration-700 bg-[#F8F9FA] dark:bg-theme-bg p-8 md:p-16 font-sans text-gray-900 dark:text-white selection:bg-theme-gold selection:text-black relative overflow-x-hidden">
     
-    <div class="fixed top-8 right-8 md:top-12 md:right-16 flex items-center gap-5 sm:gap-6 z-40">
+    <div class="fixed top-6 right-2 md:top-12 md:right-19 flex items-center gap-5 sm:gap-6 z-40 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border   border border-gray-200/50 dark:border-white/10">
       
       <button v-if="!isAuthenticated" @click="openAuthModal('login')" class="text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors">
         Sign In
@@ -128,42 +128,42 @@ onMounted(() => {
       <component :is="Component" :key="$route.fullPath + refreshKey" />
     </RouterView>
 
-    <div v-if="isLoginModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center">
-      <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" @click="isLoginModalOpen = false"></div>
+   <div v-if="isLoginModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity" @click="isLoginModalOpen = false"></div>
       
-      <div class="relative bg-white dark:bg-theme-bg w-full max-w-md p-10 shadow-2xl border border-gray-100 dark:border-white/10 animate-fade-in mx-4">
-        <button @click="isLoginModalOpen = false" class="absolute top-6 right-6 text-2xl font-light text-gray-400 hover:text-theme-gold transition-colors">&times;</button>
+      <div class="relative backdrop-blur-2xl bg-white/40 dark:bg-theme-bg/50 w-full max-w-md p-10 shadow-[0_8px_32px_rgba(0,0,0,0.1)] border border-white/50 dark:border-white/10 rounded-xl animate-fade-in mx-4">
+        <button @click="isLoginModalOpen = false" class="absolute top-6 right-6 text-2xl font-light text-gray-500 dark:text-gray-400 hover:text-theme-gold transition-colors">&times;</button>
         
         <h3 class="font-serif text-2xl font-light text-gray-900 dark:text-white mb-2">
           {{ isRegisterMode ? 'Create Account' : 'Client Portal' }}
         </h3>
-        <p class="text-xs text-gray-500 tracking-widest uppercase mb-8">
+        <p class="text-xs text-gray-600 dark:text-gray-400 tracking-widest uppercase mb-8">
           {{ isRegisterMode ? 'Join our exclusive boutique' : 'Access your premium account' }}
         </p>
         
         <form @submit.prevent="handleAuthSubmit" class="flex flex-col gap-6">
           
           <div v-if="isRegisterMode" class="flex flex-col gap-2">
-            <label class="text-[10px] uppercase tracking-[0.2em] text-gray-400">Full Name</label>
-            <input v-model="authForm.name" type="text" placeholder="John Doe" class="bg-transparent border-b border-gray-300 dark:border-white/20 focus:border-theme-gold outline-none py-2 text-sm font-light transition-colors text-gray-900 dark:text-white" :required="isRegisterMode" />
+            <label class="text-[10px] uppercase tracking-[0.2em] text-gray-600 dark:text-gray-400">Full Name</label>
+            <input v-model="authForm.name" type="text" placeholder="John Doe" class="bg-transparent border-b border-gray-400/50 dark:border-white/20 focus:border-theme-gold outline-none py-2 text-sm font-light transition-colors text-gray-900 dark:text-white placeholder-gray-500/50" :required="isRegisterMode" />
           </div>
 
           <div class="flex flex-col gap-2">
-            <label class="text-[10px] uppercase tracking-[0.2em] text-gray-400">Email Address / Username</label>
-            <input v-model="authForm.username" type="text" placeholder="john@example.com" class="bg-transparent border-b border-gray-300 dark:border-white/20 focus:border-theme-gold outline-none py-2 text-sm font-light transition-colors text-gray-900 dark:text-white" required />
+            <label class="text-[10px] uppercase tracking-[0.2em] text-gray-600 dark:text-gray-400">Email Address / Username</label>
+            <input v-model="authForm.username" type="text" placeholder="john@example.com" class="bg-transparent border-b border-gray-400/50 dark:border-white/20 focus:border-theme-gold outline-none py-2 text-sm font-light transition-colors text-gray-900 dark:text-white placeholder-gray-500/50" required />
           </div>
           
           <div class="flex flex-col gap-2">
-            <label class="text-[10px] uppercase tracking-[0.2em] text-gray-400">Password</label>
-            <input v-model="authForm.password" type="password" class="bg-transparent border-b border-gray-300 dark:border-white/20 focus:border-theme-gold outline-none py-2 text-sm font-light transition-colors text-gray-900 dark:text-white" required />
+            <label class="text-[10px] uppercase tracking-[0.2em] text-gray-600 dark:text-gray-400">Password</label>
+            <input v-model="authForm.password" type="password" class="bg-transparent border-b border-gray-400/50 dark:border-white/20 focus:border-theme-gold outline-none py-2 text-sm font-light transition-colors text-gray-900 dark:text-white placeholder-gray-500/50" required />
           </div>
           
           <div class="flex flex-col gap-3 mt-4">
-            <button type="submit" :disabled="isLoading" class="w-full bg-theme-gold text-white dark:text-theme-bg py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-theme-gold/80 transition-colors disabled:opacity-50">
+            <button type="submit" :disabled="isLoading" class="w-full bg-theme-gold text-white dark:text-theme-bg py-4 text-xs uppercase rounded-full border  tracking-[0.2em] font-medium hover:bg-theme-gold/80 transition-colors disabled:opacity-50 shadow-lg">
               {{ isLoading ? 'Processing...' : (isRegisterMode ? 'Complete Registration' : 'Secure Sign In') }}
             </button>
 
-            <button type="button" @click="isRegisterMode = !isRegisterMode" class="w-full bg-transparent border border-gray-900 dark:border-white text-gray-900 dark:text-white py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+            <button type="button" @click="isRegisterMode = !isRegisterMode" class="w-full bg-white/20 dark:bg-black/20 border rounded-full border  border-gray-900/20 dark:border-white/20 text-gray-900 dark:text-white py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-white/40 dark:hover:bg-white/10 transition-colors backdrop-blur-md">
               {{ isRegisterMode ? 'Already have an account? Sign In' : 'Create an Account' }}
             </button>
           </div>
@@ -172,8 +172,9 @@ onMounted(() => {
       </div>
     </div>
 
-    <div v-if="isWishlistOpen" @click="isWishlistOpen = false" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity"></div>
-    <div class="fixed top-0 right-0 h-full w-80 md:w-96 bg-white dark:bg-theme-bg shadow-2xl z-50 transform transition-transform duration-700 border-l border-gray-100 dark:border-white/10 p-8 flex flex-col" :class="isWishlistOpen ? 'translate-x-0' : 'translate-x-full'">
+   <div v-if="isWishlistOpen" @click="isWishlistOpen = false" class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40 transition-opacity duration-500"></div>
+    
+    <div class="fixed top-0 right-0 h-full w-80 md:w-96 backdrop-blur-2xl bg-white/40 dark:bg-theme-bg/50 shadow-[-20px_0_40px_rgba(0,0,0,0.08)] z-50 transform transition-transform duration-700 ease-in-out border-l border-white/50 dark:border-white/10 rounded-l-3xl p-8 flex flex-col" :class="isWishlistOpen ? 'translate-x-0' : 'translate-x-full'">
       <div class="flex justify-between items-center mb-8">
         <h3 class="font-serif text-2xl font-light">Wishlist</h3>
         <button @click="isWishlistOpen = false" class="text-2xl font-light hover:text-theme-gold transition-colors">&times;</button>
@@ -185,7 +186,7 @@ onMounted(() => {
       </div>
       <div class="flex-grow overflow-y-auto space-y-6 pr-2">
         <div v-for="item in wishlist" :key="item.id" class="flex gap-4 border-b border-gray-100 dark:border-white/10 pb-4">
-          <img :src="item.thumbnail" class="w-16 h-16 object-cover bg-gray-50 dark:bg-theme-card" />
+          <img :src="item.thumbnail" class="w-16 h-16 object-cover bg-gray-50 dark:bg-theme-card rounded-md" />
           <div class="flex flex-col justify-between flex-grow">
             <h4 class="text-sm font-serif truncate pr-4">{{ item.title }}</h4>
             <p class="text-theme-gold text-xs tracking-widest mt-1">${{ item.price.toLocaleString() }}</p>
@@ -195,8 +196,9 @@ onMounted(() => {
       </div>
     </div>
 
-    <div v-if="isCartOpen" @click="isCartOpen = false" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity"></div>
-    <div class="fixed top-0 right-0 h-full w-80 md:w-96 bg-white dark:bg-theme-bg shadow-2xl z-50 transform transition-transform duration-700 border-l border-gray-100 dark:border-white/10 p-8 flex flex-col" :class="isCartOpen ? 'translate-x-0' : 'translate-x-full'">
+    <div v-if="isCartOpen" @click="isCartOpen = false" class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40 transition-opacity duration-500"></div>
+    
+    <div class="fixed top-0 right-0 h-full w-80 md:w-96 backdrop-blur-2xl bg-white/40 dark:bg-theme-bg/50 shadow-[-20px_0_40px_rgba(0,0,0,0.08)] z-50 transform transition-transform duration-700 ease-in-out border-l border-white/50 dark:border-white/10 rounded-l-3xl p-8 flex flex-col" :class="isCartOpen ? 'translate-x-0' : 'translate-x-full'">
       <div class="flex justify-between items-center mb-8">
         <h3 class="font-serif text-2xl font-light">Your Bag</h3>
         <button @click="isCartOpen = false" class="text-2xl font-light hover:text-theme-gold transition-colors">&times;</button>
@@ -208,7 +210,7 @@ onMounted(() => {
       </div>
       <div class="flex-grow overflow-y-auto space-y-6 pr-2">
         <div v-for="item in cart" :key="item.id" class="flex gap-4 border-b border-gray-100 dark:border-white/10 pb-4">
-          <img :src="item.thumbnail" class="w-16 h-16 object-cover bg-gray-50 dark:bg-theme-card" />
+          <img :src="item.thumbnail" class="w-16 h-16 object-cover bg-gray-50 dark:bg-theme-card rounded-md" />
           <div class="flex flex-col justify-between flex-grow">
             <h4 class="text-sm font-serif truncate pr-4">{{ item.title }}</h4>
             <div class="flex justify-between items-center mt-1">
@@ -224,7 +226,6 @@ onMounted(() => {
           <span class="text-sm uppercase tracking-widest text-gray-500">Subtotal</span>
           <span class="font-serif tracking-wide text-lg">${{ cartTotal.toLocaleString() }}</span>
         </div>
-        
         <button v-if="isAuthenticated" class="w-full bg-theme-gold text-white dark:text-theme-bg py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-theme-gold/80 transition-colors">
           Secure Checkout
         </button>
@@ -233,7 +234,6 @@ onMounted(() => {
         </button>
       </div>
     </div>
-
   </div>
 </template>
 

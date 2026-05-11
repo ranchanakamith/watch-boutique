@@ -66,7 +66,7 @@ onMounted(() => {
   <div class="w-full">
     
     <Teleport to="body">
-      <button @click="router.push('/')" class="fixed top-8 left-8 md:top-12 md:left-16 z-[100] flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors group">
+      <button @click="router.push('/')" class="fixed top-7 left-3 md:top-12 md:left-19 z-[100] flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors group backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border   border rounded-full border  border-gray-200/50 dark:border-white/10">
         <span class="transform group-hover:-translate-x-1 transition-transform duration-300">&larr;</span> 
         Back
       </button>
@@ -108,14 +108,14 @@ onMounted(() => {
             <button @click="handleAddToCart" 
                     :class="[
                       'flex-1 py-4 text-xs uppercase tracking-[0.2em] transition-all duration-300 border active:scale-[0.98]',
-                      isAddingToBag ? 'bg-theme-gold border-theme-gold text-white dark:text-theme-bg' : 'bg-transparent border-gray-900 dark:border-white text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white dark:hover:text-theme-bg'
+                      isAddingToBag ? 'bg-theme-gold border-theme-gold text-white dark:text-theme-bg' : 'bg-transparent rounded-full border  border-gray-900 dark:border-white text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white dark:hover:text-theme-bg'
                     ]">
               {{ isAddingToBag ? 'Added to Bag ✓' : 'Add to Bag' }}
             </button>
 
             <button @click="handleBuyNow" 
                     :class="[
-                      'flex-1 py-4 text-xs uppercase tracking-[0.2em] transition-all duration-300 border active:scale-[0.98] bg-theme-gold border-theme-gold text-white dark:text-theme-bg hover:opacity-80',
+                      'flex-1 py-4 text-xs uppercase tracking-[0.2em] transition-all duration-300 border active:scale-[0.98] bg-theme-gold rounded-full border  border-theme-gold text-white dark:text-theme-bg hover:opacity-80',
                       isBuyingNow ? 'animate-pulse' : ''
                     ]">
               {{ isBuyingNow ? 'Processing...' : 'Buy Now' }}

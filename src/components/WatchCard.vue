@@ -8,7 +8,6 @@ import { useWishlist } from '../composables/useWishlist';
 const props = defineProps<{
   watch: Watch;
 }>();
-
 const router = useRouter();
 const { addToCart } = useCart();
 const { wishlist, toggleWishlist } = useWishlist();
@@ -84,14 +83,14 @@ const goToWatchInfo = () => {
       <button @click.stop="handleAddToCart" 
               :class="[
                 'flex-1 py-3 text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border active:scale-95',
-                isAddingToBag ? 'bg-theme-gold border-theme-gold text-white dark:text-theme-bg' : 'border-gray-900 dark:border-white text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white dark:hover:text-theme-bg'
+                isAddingToBag ? 'bg-theme-gold border-theme-gold text-white dark:text-theme-bg' : 'border-gray-900 rounded-full border dark:border-white text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white dark:hover:text-theme-bg'
               ]">
         {{ isAddingToBag ? 'Added ✓' : 'Add to Bag' }}
       </button>
 
       <button @click.stop="handleBuyNow" 
               :class="[
-                'flex-1 py-3 text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border active:scale-95 bg-theme-gold border-theme-gold text-white dark:text-theme-bg hover:opacity-80',
+                'flex-1 py-3 text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border rounded-full border  active:scale-95 bg-theme-gold border-theme-gold text-white dark:text-theme-bg hover:opacity-80',
                 isBuyingNow ? 'animate-pulse' : ''
               ]">
         {{ isBuyingNow ? 'Wait...' : 'Buy Now' }}

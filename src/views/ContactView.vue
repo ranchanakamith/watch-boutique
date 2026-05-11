@@ -8,7 +8,7 @@
     
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
       
-      <div class="bg-white dark:bg-theme-card/30 border border-gray-100 dark:border-white/10 p-12 relative overflow-hidden shadow-sm dark:shadow-none transition-colors duration-700">
+      <div class="bg-white dark:bg-theme-card/30 border rounded-xl border-gray-100 dark:border-white/10 p-12 relative overflow-hidden shadow-sm dark:shadow-none transition-colors duration-700">
         
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-theme-gold to-transparent opacity-50"></div>
         
@@ -65,7 +65,7 @@
           <textarea rows="4" class="w-full bg-transparent border-b border-gray-300 dark:border-white/20 focus:border-theme-gold dark:focus:border-theme-gold outline-none py-2 text-sm font-light text-gray-900 dark:text-white transition-colors resize-none"></textarea>
         </div>
         
-        <button class="w-full bg-theme-gold text-white dark:text-theme-bg py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-theme-gold/80 transition-colors mt-4">
+        <button class="w-full bg-theme-gold text-white rounded-full border  dark:text-theme-bg py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-theme-gold/80 transition-colors mt-4">
           Send Inquiry
         </button>
       </form>
