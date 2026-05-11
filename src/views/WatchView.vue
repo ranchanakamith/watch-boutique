@@ -68,7 +68,7 @@ onMounted(() => {
     <Teleport to="body">
       <button @click="router.push('/')" class="fixed top-8 left-8 md:top-12 md:left-16 z-[100] flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors group">
         <span class="transform group-hover:-translate-x-1 transition-transform duration-300">&larr;</span> 
-        Back to Collection
+        Back
       </button>
     </Teleport>
 
