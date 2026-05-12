@@ -27,11 +27,12 @@ const handleSearchSubmit = () => {
 
 <template>
   <div>
-  <button @click="isOpen = true" class="fixed top-5 left-2 md:top-9 md:left-19 z-40 flex flex-col items-center justify-center gap-1.5 cursor-pointer group backdrop-blur- bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-4 rounded-full border  border border-gray-200/50 dark:border-white/10 transition-all duration-500 hover:bg-white/90 dark:hover:bg-theme-card/90">
+  <button @click="isOpen = true" class="fixed top-6 left-2 md:top-12 md:left-19 z-40 flex flex-col items-center justify-center gap-1.5 cursor-pointer group backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-4 rounded-full border  border border-gray-200/50 dark:border-white/10 transition-all duration-500 hover:bg-white/90 dark:hover:bg-theme-card/90">
+                                               
+    <div class="w-6 h-[1px] bg-gray-900 dark:bg-white group-hover:bg-theme-gold transition-colors duration-300"></div>
       <div class="w-6 h-[1px] bg-gray-900 dark:bg-white group-hover:bg-theme-gold transition-colors duration-300"></div>
       <div class="w-6 h-[1px] bg-gray-900 dark:bg-white group-hover:bg-theme-gold transition-colors duration-300"></div>
-      <div class="w-6 h-[1px] bg-gray-900 dark:bg-white group-hover:bg-theme-gold transition-colors duration-300"></div>
-      <span class="text-[8px] uppercase tracking-widest mt-1 text-gray-500 dark:text-theme-muted group-hover:text-theme-gold transition-colors">Filters</span>
+     
     </button>
 
     <div v-if="isOpen" @click="isOpen = false" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity duration-500"></div>
