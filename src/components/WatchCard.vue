@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Watch } from '../types/watch';
 import { useCart } from '../composables/useCart';
@@ -21,6 +21,33 @@ const isAddingToBag = ref(false);
 const isBuyingNow = ref(false);
 const heartAnim = ref(false);
 
+// Scroll-reveal state for MOBILE only
+const cardRef = ref<HTMLElement | null>(null);
+const isInCenter = ref(false);
+let observer: IntersectionObserver | null = null;
+
+onMounted(() => {
+  if (cardRef.value) {
+    observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          isInCenter.value = entry.isIntersecting;
+        });
+      },
+      {
+        root: null,
+        rootMargin: '-42% 0px -42% 0px',
+        threshold: 0,
+      }
+    );
+    observer.observe(cardRef.value);
+  }
+});
+
+onUnmounted(() => {
+  if (observer) observer.disconnect();
+});
+
 const handleAddToCart = () => {
   addToCart(props.watch);
   isAddingToBag.value = true;
@@ -35,7 +62,6 @@ const handleBuyNow = () => {
   setTimeout(() => {
     isBuyingNow.value = false;
     alert(`Proceeding to Secure Checkout for ${props.watch.title}...`);
-    // FUTURE: router.push('/checkout');
   }, 600);
 };
 
@@ -53,7 +79,7 @@ const goToWatchInfo = () => {
 </script>
 
 <template>
-  <div @click="goToWatchInfo" class="flex flex-col group cursor-pointer">
+  <div ref="cardRef" @click="goToWatchInfo" class="flex flex-col group cursor-pointer">
     <div class="relative bg-gray-50 dark:bg-theme-card p-8 mb-6 overflow-hidden flex items-center justify-center h-[350px] transition-colors duration-700">
       
       <button @click.stop="handleToggleWishlist" class="absolute top-4 right-4 z-10 text-gray-400 hover:text-theme-gold transition-colors">
@@ -78,7 +104,17 @@ const goToWatchInfo = () => {
       <p class="text-theme-gold text-sm tracking-widest">${{ watch.price.toLocaleString() }}</p>
     </div>
 
-    <div class="mt-6 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+    <!-- 
+      MOBILE (< md): Scroll-reveal via IntersectionObserver
+      DESKTOP (>= md): Original hover effect via group-hover
+    -->
+    <div 
+      :class="[
+        'mt-6 flex gap-3 transition-all duration-500 ease-out',
+        isInCenter ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3',
+        'md:opacity-0 md:translate-y-0 md:group-hover:opacity-100 md:group-hover:translate-y-0'
+      ]"
+    >
       
       <button @click.stop="handleAddToCart" 
               :class="[
