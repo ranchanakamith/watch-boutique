@@ -3,12 +3,22 @@ import { ref, onMounted, computed, watchEffect } from 'vue';
 import { useWatches } from '../composables/useWatches';
 import WatchCard from '../components/WatchCard.vue';
 import SidebarFilter from '../components/SidebarFilter.vue';
+import WelcomePortal from '../components/WelcomePortal.vue';
 
 const { watches, isLoading, error, fetchWatches } = useWatches();
 
 const searchQuery = ref('');
 const selectedCategory = ref('All');
 const maxPrice = ref(10000); 
+
+// --- NEW: Portal Logic ---
+const hasEnteredStore = ref(false);
+
+const handleStoreEntry = (category: string) => {
+  selectedCategory.value = category;
+  hasEnteredStore.value = true;
+};
+// -------------------------
 
 const availableCategories = computed(() => {
   if (!watches.value) return ['All'];
@@ -101,49 +111,62 @@ onMounted(() => {
 
 <template>
   <div class="w-full">
-    <SidebarFilter 
-      v-model:searchQuery="searchQuery" 
-      v-model:selectedCategory="selectedCategory" 
-      v-model:maxPrice="maxPrice" 
-      :availableCategories="availableCategories" 
-      :highestPrice="highestPrice" 
-    />
+    
+    <transition
+      leave-active-class="transition-opacity duration-1000 ease-in-out"
+      leave-to-class="opacity-0"
+    >
+      <WelcomePortal v-if="!hasEnteredStore" @enterStore="handleStoreEntry" />
+    </transition>
 
-    <div class="animate-fade-in transition-colors duration-700">
-      <div v-if="isLoading" class="flex justify-center items-center py-32">
-        <div class="animate-pulse text-theme-gold uppercase tracking-[0.3em] text-xs font-light">Preparing the showroom...</div>
-      </div>
+    <div v-if="hasEnteredStore" class="animate-fade-in transition-colors duration-700">
+      
+      <SidebarFilter 
+        v-model:searchQuery="searchQuery" 
+        v-model:selectedCategory="selectedCategory" 
+        v-model:maxPrice="maxPrice" 
+        :availableCategories="availableCategories" 
+        :highestPrice="highestPrice" 
+      />
 
-      <div v-else-if="error" class="text-center py-10">
-        <p class="text-red-500 font-light tracking-widest text-sm uppercase">{{ error }}</p>
-      </div>
-
-      <div v-else-if="filteredWatches.length === 0" class="text-center py-24">
-        <p class="text-gray-500 dark:text-gray-400 font-light tracking-[0.2em] text-sm uppercase mb-6">
-          No timepieces match "{{ searchQuery }}"
-        </p>
+      <div class="animate-fade-in transition-colors duration-700 pt-20">
         
-        <div v-if="searchSuggestion" class="mb-8">
-          <p class="text-gray-900 dark:text-white font-serif text-xl tracking-wide font-light">
-            Did you mean 
-            <button @click="applySuggestion(searchSuggestion)" class="text-theme-gold hover:text-gray-600 dark:hover:text-gray-300 underline underline-offset-4 decoration-theme-gold/50 transition-colors capitalize">
-              {{ searchSuggestion }}
-            </button>
-            ?
+        <div v-if="isLoading" class="flex justify-center items-center py-32">
+          <div class="animate-pulse text-theme-gold uppercase tracking-[0.3em] text-xs font-light">Preparing the showroom...</div>
+        </div>
+
+        <div v-else-if="error" class="text-center py-10">
+          <p class="text-red-500 font-light tracking-widest text-sm uppercase">{{ error }}</p>
+        </div>
+
+        <div v-else-if="filteredWatches.length === 0" class="text-center py-24">
+          <p class="text-gray-500 dark:text-gray-400 font-light tracking-[0.2em] text-sm uppercase mb-6">
+            No timepieces match "{{ searchQuery }}"
           </p>
-        </div>
-        <div v-else class="mb-8">
-          <p class="text-gray-500 dark:text-gray-400 font-light text-sm tracking-widest uppercase">Please try adjusting your filters</p>
+          
+          <div v-if="searchSuggestion" class="mb-8">
+            <p class="text-gray-900 dark:text-white font-serif text-xl tracking-wide font-light">
+              Did you mean 
+              <button @click="applySuggestion(searchSuggestion)" class="text-theme-gold hover:text-gray-600 dark:hover:text-gray-300 underline underline-offset-4 decoration-theme-gold/50 transition-colors capitalize">
+                {{ searchSuggestion }}
+              </button>
+              ?
+            </p>
+          </div>
+          <div v-else class="mb-8">
+            <p class="text-gray-500 dark:text-gray-400 font-light text-sm tracking-widest uppercase">Please try adjusting your filters</p>
+          </div>
+
+          <button @click="searchQuery = ''; selectedCategory = 'All'; maxPrice = highestPrice" class="inline-block border border-gray-300 dark:border-white/20 hover:border-theme-gold dark:hover:border-theme-gold px-8 py-3 text-[10px] uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300 hover:text-theme-gold dark:hover:text-theme-gold transition-all duration-500">
+            Reset All Filters
+          </button>
         </div>
 
-        <button @click="searchQuery = ''; selectedCategory = 'All'; maxPrice = highestPrice" class="inline-block border border-gray-300 dark:border-white/20 hover:border-theme-gold dark:hover:border-theme-gold px-8 py-3 text-[10px] uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300 hover:text-theme-gold dark:hover:text-theme-gold transition-all duration-500">
-          Reset All Filters
-        </button>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-20 max-w-[1400px] mx-auto px-4 md:px-8 pb-32">
+          <WatchCard v-for="watch in filteredWatches" :key="watch.id" :watch="watch" />
+        </div>
       </div>
-
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-20 max-w-[1400px] mx-auto">
-        <WatchCard v-for="watch in filteredWatches" :key="watch.id" :watch="watch" />
-      </div>
+      
     </div>
   </div>
 </template>
