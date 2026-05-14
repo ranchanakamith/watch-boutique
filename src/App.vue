@@ -176,9 +176,9 @@ onMounted(() => {
       </div>
     </div>
 
-   <div v-if="isWishlistOpen" @click="isWishlistOpen = false" class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40 transition-opacity duration-500"></div>
+   <div v-if="isWishlistOpen" @click="isWishlistOpen = false" class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[100] transition-opacity duration-500"></div>
     
-    <div class="fixed top-0 right-0 h-full w-80 md:w-96 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 shadow-[20px_0_40px_rgba(0,0,0,0.08)] z-50 transform transition-transform duration-700 ease-in-out border-l border-gray-200/50 dark:border-white/10 rounded-l-3xl p-8 flex flex-col" :class="isWishlistOpen ? 'translate-x-0' : 'translate-x-full'">
+    <div class="fixed top-0 right-0 h-full w-80 md:w-96 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 shadow-[20px_0_40px_rgba(0,0,0,0.08)] z-[110] transform transition-transform duration-700 ease-in-out border-l border-gray-200/50 dark:border-white/10 rounded-l-3xl p-8 flex flex-col" :class="isWishlistOpen ? 'translate-x-0' : 'translate-x-full'">
                                                         
       <div class="flex justify-between items-center mb-8">
         <h3 class="font-serif text-2xl font-light">Wishlist</h3>
@@ -201,9 +201,9 @@ onMounted(() => {
       </div>
     </div>
 
-    <div v-if="isCartOpen" @click="isCartOpen = false" class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40 transition-opacity duration-500"></div>
+    <div v-if="isCartOpen" @click="isCartOpen = false" class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[100] transition-opacity duration-500"></div>
     
-    <div class="fixed top-0 right-0 h-full w-80 md:w-96 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 shadow-[20px_0_40px_rgba(0,0,0,0.08)] z-50 transform transition-transform duration-700 ease-in-out border-l border-gray-200/50 dark:border-white/10 rounded-l-3xl p-8 flex flex-col" :class="isCartOpen ? 'translate-x-0' : 'translate-x-full'">
+    <div class="fixed top-0 right-0 h-full w-80 md:w-96 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 shadow-[20px_0_40px_rgba(0,0,0,0.08)] z-[110] transform transition-transform duration-700 ease-in-out border-l border-gray-200/50 dark:border-white/10 rounded-l-3xl p-8 flex flex-col" :class="isCartOpen ? 'translate-x-0' : 'translate-x-full'">
      
       <div class="flex justify-between items-center mb-8">
         <h3 class="font-serif text-2xl font-light">Your Bag</h3>
