@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch as vueWatch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useWatches } from '../composables/useWatches';
 import { useCart } from '../composables/useCart';
 import { useWishlist } from '../composables/useWishlist';
+import WatchCard from '../components/WatchCard.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -20,6 +21,23 @@ const isWatchInWishlist = computed(() => {
   if (!watch.value) return false;
   return wishlist.value.some(item => item.id === watch.value!.id);
 });
+
+// Computed property to find similar watches based on category
+const similarWatches = computed(() => {
+  if (!watch.value || !watches.value.length) return [];
+  
+  return watches.value
+    .filter(w => w.category === watch.value!.category && w.id !== watch.value!.id)
+    .slice(0, 4); // Limit to 4 items for a clean row
+});
+
+// Watch the route. If they click a similar watch, scroll to the top smoothly!
+vueWatch(
+  () => route.params.id,
+  () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+);
 
 // Animation States
 const isAddingToBag = ref(false);
@@ -59,14 +77,16 @@ onMounted(() => {
   if (watches.value.length === 0) {
     fetchWatches();
   }
+  // Scroll to top on initial load
+  window.scrollTo(0, 0);
 });
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="w-full pb-24">
     
     <Teleport to="body">
-      <button @click="router.push('/')" class="fixed top-7 left-3 md:top-12 md:left-19 z-[100] flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors group backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border   border rounded-full border  border-gray-200/50 dark:border-white/10">
+      <button @click="router.push('/')" class="fixed top-7 left-3 md:top-12 md:left-19 z-[100] flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors group backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border border-gray-200/50 dark:border-white/10 shadow-sm">
         <span class="transform group-hover:-translate-x-1 transition-transform duration-300">&larr;</span> 
         Back
       </button>
@@ -74,9 +94,9 @@ onMounted(() => {
 
     <div class="animate-fade-in transition-colors duration-700 max-w-[1200px] mx-auto mt-10 md:mt-20">
       
-      <div v-if="watch" class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 px-4 md:px-0 mt-24">
+      <div v-if="watch" class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 px-4 md:px-0 mt-24 mb-32">
         
-        <div class="relative bg-gray-50 dark:bg-theme-card p-12 flex items-center justify-center min-h-[400px] md:min-h-[600px]">
+        <div class="relative bg-gray-50 dark:bg-theme-card p-12 flex items-center justify-center min-h-[400px] md:min-h-[600px] border border-gray-100 dark:border-white/5 rounded-sm">
           <button @click="handleToggleWishlist" class="absolute top-6 right-6 z-10 text-gray-400 hover:text-theme-gold transition-colors">
             <svg v-if="isWatchInWishlist" 
                  :class="['w-6 h-6 text-theme-gold transition-transform duration-300 ease-out', heartAnim ? 'scale-150' : 'scale-100']" 
@@ -90,11 +110,11 @@ onMounted(() => {
             </svg>
           </button>
 
-          <img :src="watch.thumbnail" :alt="watch.title" class="w-full h-full object-contain drop-shadow-2xl" />
+          <img :src="watch.thumbnail" :alt="watch.title" class="w-full h-full object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700" />
         </div>
 
         <div class="flex flex-col justify-center">
-          <span class="text-[10px] uppercase tracking-[0.4em] text-gray-400 dark:text-theme-muted mb-4">{{ watch.brand || 'Rolex' }}</span>
+          <span class="text-[10px] uppercase tracking-[0.4em] text-gray-400 dark:text-theme-muted mb-4">{{ watch.brand || 'Premium Collection' }}</span>
           <h2 class="font-serif text-3xl md:text-5xl text-gray-900 dark:text-white mb-6 font-light tracking-wide leading-tight">{{ watch.title }}</h2>
           <p class="text-theme-gold text-xl tracking-widest mb-10">${{ watch.price.toLocaleString() }}</p>
           
@@ -107,15 +127,15 @@ onMounted(() => {
           <div class="flex flex-col sm:flex-row gap-4 w-full">
             <button @click="handleAddToCart" 
                     :class="[
-                      'flex-1 py-4 text-xs uppercase tracking-[0.2em] transition-all duration-300 border rounded-full border active:scale-[0.98]',
-                      isAddingToBag ? 'bg-theme-gold border-theme-gold text-white dark:text-theme-bg' : 'bg-transparent rounded-full border  border-gray-900 dark:border-white text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white dark:hover:text-theme-bg'
+                      'flex-1 py-4 text-xs uppercase tracking-[0.2em] transition-all duration-300 border rounded-full active:scale-[0.98]',
+                      isAddingToBag ? 'bg-theme-gold border-theme-gold text-white dark:text-theme-bg' : 'bg-transparent border-gray-900 dark:border-white text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white dark:hover:text-theme-bg'
                     ]">
               {{ isAddingToBag ? 'Added to Bag ✓' : 'Add to Bag' }}
             </button>
 
             <button @click="handleBuyNow" 
                     :class="[
-                      'flex-1 py-4 text-xs uppercase tracking-[0.2em] transition-all duration-300 border active:scale-[0.98] bg-theme-gold rounded-full border  border-theme-gold text-white dark:text-theme-bg hover:opacity-80',
+                      'flex-1 py-4 text-xs uppercase tracking-[0.2em] transition-all duration-300 border active:scale-[0.98] bg-theme-gold rounded-full border-theme-gold text-white dark:text-theme-bg hover:opacity-80',
                       isBuyingNow ? 'animate-pulse' : ''
                     ]">
               {{ isBuyingNow ? 'Processing...' : 'Buy Now' }}
@@ -128,6 +148,18 @@ onMounted(() => {
 
       <div v-else class="text-center py-32">
         <p class="text-gray-500 uppercase tracking-widest text-sm">Timepiece not found.</p>
+      </div>
+
+      <div v-if="similarWatches.length > 0" class="border-t border-gray-200 dark:border-white/10 pt-24 px-4 md:px-0">
+        <div class="text-center mb-16">
+          <h3 class="font-serif text-3xl font-light text-gray-900 dark:text-white tracking-wide">Similar Timepieces</h3>
+          <p class="text-gray-400 text-[10px] uppercase tracking-[0.3em] mt-4">Discover pieces from the same collection</p>
+          <div class="h-[1px] w-12 bg-theme-gold mx-auto mt-8"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+          <WatchCard v-for="similar in similarWatches" :key="similar.id" :watch="similar" />
+        </div>
       </div>
 
     </div>

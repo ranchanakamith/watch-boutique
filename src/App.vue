@@ -195,7 +195,7 @@ onMounted(() => {
           <div class="flex flex-col justify-between flex-grow">
             <h4 class="text-sm font-serif truncate pr-4">{{ item.title }}</h4>
             <p class="text-theme-gold text-xs tracking-widest mt-1">${{ item.price.toLocaleString() }}</p>
-            <button @click="removeFromWishlist(item.id)" class="text-[9px] uppercase tracking-[0.2em] text-gray-900 self-start hover:text-red-500 transition-colors mt-2">Remove</button>
+            <button @click="removeFromWishlist(item.id)" class="text-[9px] uppercase tracking-[0.2em] text-gray-500 self-start hover:text-red-500 transition-colors mt-2">Remove</button>
           </div>
         </div>
       </div>
@@ -223,7 +223,7 @@ onMounted(() => {
               <p class="text-gray-500 text-xs">Qty: {{ item.quantity }}</p>
               <p class="text-theme-gold text-xs tracking-widest">${{ (item.price * item.quantity).toLocaleString() }}</p>
             </div>
-            <button @click="removeFromCart(item.id)" class="text-[9px] uppercase tracking-[0.2em] text-gray-900 self-start hover:text-red-500 transition-colors mt-2">Remove</button>
+            <button @click="removeFromCart(item.id)" class="text-[9px] uppercase tracking-[0.2em] text-gray-500 self-start hover:text-red-500 transition-colors mt-2">Remove</button>
           </div>
         </div>
       </div>
