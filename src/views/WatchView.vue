@@ -28,7 +28,7 @@ const similarWatches = computed(() => {
   
   return watches.value
     .filter(w => w.category === watch.value!.category && w.id !== watch.value!.id)
-    .slice(0, 4); // Limit to 4 items for a clean row
+    .slice(0, 4); 
 });
 
 // Watch the route. If they click a similar watch, scroll to the top smoothly!
@@ -38,6 +38,17 @@ vueWatch(
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 );
+
+// --- NEW SMART BACK LOGIC ---
+const goBack = () => {
+  // Check if Vue Router has recorded a previous page in this session
+  if (window.history.state && window.history.state.back) {
+    router.back(); // Take them to the previously viewed watch or home
+  } else {
+    router.push('/'); // Fallback to Home if they opened this in a new tab
+  }
+};
+// ----------------------------
 
 // Animation States
 const isAddingToBag = ref(false);
@@ -60,7 +71,6 @@ const handleBuyNow = () => {
   setTimeout(() => {
     isBuyingNow.value = false;
     alert(`Proceeding to Secure Checkout for ${watch.value!.title}...`);
-    // FUTURE: router.push('/checkout');
   }, 600);
 };
 
@@ -77,7 +87,6 @@ onMounted(() => {
   if (watches.value.length === 0) {
     fetchWatches();
   }
-  // Scroll to top on initial load
   window.scrollTo(0, 0);
 });
 </script>
@@ -86,7 +95,7 @@ onMounted(() => {
   <div class="w-full pb-24">
     
     <Teleport to="body">
-      <button @click="router.push('/')" class="fixed top-7 left-3 md:top-12 md:left-19 z-[100] flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors group backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border border-gray-200/50 dark:border-white/10 shadow-sm">
+      <button @click="goBack" class="fixed top-6 left-2 md:top-12 md:left-19 z-[100] flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors group backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border border-gray-200/50 dark:border-white/10 shadow-sm active:scale-[0.98]">
         <span class="transform group-hover:-translate-x-1 transition-transform duration-300">&larr;</span> 
         Back
       </button>

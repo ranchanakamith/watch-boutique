@@ -1,5 +1,21 @@
+<script lang="ts">
+import { ref } from 'vue';
+
+// ==============================================
+// GLOBAL MEMORY STATE
+// These variables live outside the component instance. 
+// They survive when navigating to a product and clicking "Back", 
+// but will reset completely if the user hits "Refresh"!
+// ==============================================
+const hasEnteredStore = ref(false);
+const searchQuery = ref('');
+const selectedCategory = ref('All');
+const maxPrice = ref(10000);
+const isFirstLoad = ref(true);
+</script>
+
 <script setup lang="ts">
-import { ref, onMounted, computed, watchEffect } from 'vue';
+import { onMounted, computed, watchEffect } from 'vue';
 import { useWatches } from '../composables/useWatches';
 import WatchCard from '../components/WatchCard.vue';
 import SidebarFilter from '../components/SidebarFilter.vue';
@@ -7,22 +23,12 @@ import WelcomePortal from '../components/WelcomePortal.vue';
 
 const { watches, isLoading, error, fetchWatches } = useWatches();
 
-const searchQuery = ref('');
-const selectedCategory = ref('All');
-const maxPrice = ref(10000); 
-
 // --- PORTAL LOGIC ---
-// 1. ALWAYS start with the portal open when they navigate to the Home page
-const hasEnteredStore = ref(false);
-
-// 2. Check if they have visited before just to change the text greeting!
 const isReturnVisit = ref(sessionStorage.getItem('hasVisited') === 'true');
 
 const handleStoreEntry = (category: string) => {
   selectedCategory.value = category;
   hasEnteredStore.value = true;
-  
-  // 3. Mark them as a returning visitor for the next time they click "Home"
   sessionStorage.setItem('hasVisited', 'true');
 };
 
@@ -43,8 +49,12 @@ const highestPrice = computed(() => {
   return Math.max(...watches.value.map(w => w.price));
 });
 
+// Only override the max price on the very first load so we don't erase user filters
 watchEffect(() => {
-  if (watches.value.length > 0) maxPrice.value = highestPrice.value;
+  if (watches.value.length > 0 && isFirstLoad.value) {
+    maxPrice.value = highestPrice.value;
+    isFirstLoad.value = false;
+  }
 });
 
 const filteredWatches = computed(() => {
@@ -117,7 +127,9 @@ const applySuggestion = (suggestion: string) => {
 };
 
 onMounted(() => {
-  fetchWatches();
+  if (watches.value.length === 0) {
+    fetchWatches();
+  }
 });
 </script>
 
