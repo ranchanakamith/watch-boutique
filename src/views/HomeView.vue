@@ -12,13 +12,18 @@ const selectedCategory = ref('All');
 const maxPrice = ref(10000); 
 
 // --- PORTAL LOGIC ---
-const hasEnteredStore = ref(sessionStorage.getItem('hasEnteredStore') === 'true');
-const isReturnVisit = ref(false);
+// 1. ALWAYS start with the portal open when they navigate to the Home page
+const hasEnteredStore = ref(false);
+
+// 2. Check if they have visited before just to change the text greeting!
+const isReturnVisit = ref(sessionStorage.getItem('hasVisited') === 'true');
 
 const handleStoreEntry = (category: string) => {
   selectedCategory.value = category;
   hasEnteredStore.value = true;
-  sessionStorage.setItem('hasEnteredStore', 'true');
+  
+  // 3. Mark them as a returning visitor for the next time they click "Home"
+  sessionStorage.setItem('hasVisited', 'true');
 };
 
 const reopenPortal = () => {
