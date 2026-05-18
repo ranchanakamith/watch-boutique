@@ -3,9 +3,6 @@ import { ref } from 'vue';
 
 // ==============================================
 // GLOBAL MEMORY STATE
-// These variables live outside the component instance. 
-// They survive when navigating to a product and clicking "Back", 
-// but will reset completely if the user hits "Refresh"!
 // ==============================================
 const hasEnteredStore = ref(false);
 const searchQuery = ref('');
@@ -49,7 +46,6 @@ const highestPrice = computed(() => {
   return Math.max(...watches.value.map(w => w.price));
 });
 
-// Only override the max price on the very first load so we don't erase user filters
 watchEffect(() => {
   if (watches.value.length > 0 && isFirstLoad.value) {
     maxPrice.value = highestPrice.value;
@@ -161,8 +157,15 @@ onMounted(() => {
 
         <div class="pt-20">
           
-          <div v-if="isLoading" class="flex justify-center items-center py-32">
-            <div class="animate-pulse text-theme-gold uppercase tracking-[0.3em] text-xs font-light">Preparing the showroom...</div>
+          <div v-if="isLoading" class="flex flex-col justify-center items-center py-32 gap-6 animate-fade-in">
+            <img 
+              src="/timeless-logo.png" 
+              alt="Timeless Logo" 
+              class="h-8 md:h-10 object-contain animate-pulse dark:invert opacity-90"
+            />
+            <div class="text-gray-400 dark:text-theme-muted uppercase tracking-[0.4em] text-[9px] font-light">
+              Preparing the showroom
+            </div>
           </div>
 
           <div v-else-if="error" class="text-center py-10">
