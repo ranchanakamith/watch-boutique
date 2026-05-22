@@ -195,9 +195,19 @@ onMounted(() => {
             </button>
           </div>
 
-          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-20 max-w-[1400px] mx-auto px-4 md:px-8 pb-32">
-            <WatchCard v-for="watch in filteredWatches" :key="watch.id" :watch="watch" />
+          <div v-else>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-20 max-w-[1400px] mx-auto px-4 md:px-8">
+              <WatchCard v-for="watch in filteredWatches" :key="watch.id" :watch="watch" />
+            </div>
+            
+            <div class="w-full border-t border-gray-200 dark:border-white/10 mt-20 pt-20 pb-32 text-center flex flex-col items-center">
+              <button @click="reopenPortal" class="inline-flex items-center gap-3 border border-gray-900 dark:border-white px-10 py-4 text-[10px] uppercase tracking-[0.3em] text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white transition-all duration-500 active:scale-[0.98] group">
+                View All Collections
+                <span class="transform group-hover:translate-x-1 transition-transform duration-300">&rarr;</span>
+              </button>
+            </div>
           </div>
+
         </div>
         
       </div>
