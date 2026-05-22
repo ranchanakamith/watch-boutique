@@ -73,7 +73,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen transition-colors duration-700 bg-[#F8F9FA] dark:bg-theme-bg p-8 md:p-16 font-sans text-gray-900 dark:text-white selection:bg-theme-gold selection:text-black relative overflow-x-hidden">
+  <div class="min-h-screen transition-colors duration-700 bg-[white] dark:bg-theme-bg p-8 md:p-16 font-sans text-gray-900 dark:text-white selection:bg-theme-gold selection:text-black relative overflow-x-hidden">
     
     <div class="fixed top-6 right-2 md:top-12 md:right-19 flex items-center gap-5 sm:gap-6 z-40 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border   border border-gray-200/50 dark:border-white/10">
       

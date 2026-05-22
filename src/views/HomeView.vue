@@ -20,18 +20,46 @@ import WelcomePortal from '../components/WelcomePortal.vue';
 
 const { watches, isLoading, error, fetchWatches } = useWatches();
 
+const productGrid = ref<HTMLElement | null>(null);
+
 // --- PORTAL LOGIC ---
 const isReturnVisit = ref(sessionStorage.getItem('hasVisited') === 'true');
 
 const handleStoreEntry = (category: string) => {
+  searchQuery.value = '';
+  maxPrice.value = highestPrice.value;
+  
   selectedCategory.value = category;
   hasEnteredStore.value = true;
   sessionStorage.setItem('hasVisited', 'true');
+  isReturnVisit.value = true;
+  
+  if (productGrid.value) {
+    productGrid.value.scrollIntoView({ behavior: 'smooth' });
+  }
 };
 
 const reopenPortal = () => {
   isReturnVisit.value = true;
-  hasEnteredStore.value = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+const viewAllWatches = () => {
+  selectedCategory.value = 'All';
+  if (productGrid.value) {
+    productGrid.value.scrollIntoView({ behavior: 'smooth' });
+  }
+};
+
+// NEW: Dedicated Reset Filters Function
+const resetFilters = () => {
+  searchQuery.value = '';
+  selectedCategory.value = 'All';
+  maxPrice.value = highestPrice.value;
+  
+  if (productGrid.value) {
+    productGrid.value.scrollIntoView({ behavior: 'smooth' });
+  }
 };
 // -------------------------
 
@@ -130,87 +158,94 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-full relative">
+  <div class="w-full relative bg-white dark:bg-theme-bg">
     
-    <transition
-      leave-active-class="transition-all duration-[1200ms] ease-in-out absolute inset-0 z-[200]"
-      leave-to-class="opacity-0 scale-[1.02] blur-md"
-    >
-      <WelcomePortal v-if="!hasEnteredStore" :isReturnVisit="isReturnVisit" @enterStore="handleStoreEntry" />
-    </transition>
+    <WelcomePortal :isReturnVisit="isReturnVisit" @enterStore="handleStoreEntry" />
 
-    <transition
-      enter-active-class="transition-all duration-[1500ms] delay-300 ease-out"
-      enter-from-class="opacity-0 translate-y-12 blur-sm"
-      enter-to-class="opacity-100 translate-y-0 blur-0"
-    >
-      <div v-if="hasEnteredStore" class="w-full">
+    <div ref="productGrid" class="w-full min-h-screen pt-20 border-t border-gray-100 dark:border-white/5">
+      
+      <SidebarFilter 
+        v-model:searchQuery="searchQuery" 
+        v-model:selectedCategory="selectedCategory" 
+        v-model:maxPrice="maxPrice" 
+        :availableCategories="availableCategories" 
+        :highestPrice="highestPrice" 
+        @openPortal="reopenPortal"
+      />
+
+      <div class="mb-20 text-center pt-8">
+        <h2 class="font-serif text-3xl md:text-5xl text-gray-900 dark:text-white font-light tracking-wide uppercase">
+          {{ selectedCategory === 'All' ? 'All Timepieces' : selectedCategory.replace('-', ' ') }}
+        </h2>
+        <div class="h-px w-12 bg-theme-gold mx-auto mt-6"></div>
+      </div>
+
+      <div class="pt-10">
         
-        <SidebarFilter 
-          v-model:searchQuery="searchQuery" 
-          v-model:selectedCategory="selectedCategory" 
-          v-model:maxPrice="maxPrice" 
-          :availableCategories="availableCategories" 
-          :highestPrice="highestPrice" 
-          @openPortal="reopenPortal"
-        />
+        <div v-if="isLoading" class="flex flex-col justify-center items-center py-32 gap-6 animate-fade-in">
+          <img 
+            src="/timeless-logo.png" 
+            alt="Timeless Logo" 
+            class="h-8 md:h-10 object-contain animate-pulse dark:invert opacity-90"
+          />
+          <div class="text-gray-400 dark:text-theme-muted uppercase tracking-[0.4em] text-[9px] font-light">
+            Preparing the showroom
+          </div>
+        </div>
 
-        <div class="pt-20">
+        <div v-else-if="error" class="text-center py-10">
+          <p class="text-red-500 font-light tracking-widest text-sm uppercase">{{ error }}</p>
+        </div>
+
+        <div v-else-if="filteredWatches.length === 0" class="text-center py-24">
+          <p class="text-gray-500 dark:text-gray-400 font-light tracking-[0.2em] text-sm uppercase mb-6">
+            No timepieces match "{{ searchQuery }}"
+          </p>
           
-          <div v-if="isLoading" class="flex flex-col justify-center items-center py-32 gap-6 animate-fade-in">
-            <img 
-              src="/timeless-logo.png" 
-              alt="Timeless Logo" 
-              class="h-8 md:h-10 object-contain animate-pulse dark:invert opacity-90"
-            />
-            <div class="text-gray-400 dark:text-theme-muted uppercase tracking-[0.4em] text-[9px] font-light">
-              Preparing the showroom
-            </div>
-          </div>
-
-          <div v-else-if="error" class="text-center py-10">
-            <p class="text-red-500 font-light tracking-widest text-sm uppercase">{{ error }}</p>
-          </div>
-
-          <div v-else-if="filteredWatches.length === 0" class="text-center py-24">
-            <p class="text-gray-500 dark:text-gray-400 font-light tracking-[0.2em] text-sm uppercase mb-6">
-              No timepieces match "{{ searchQuery }}"
+          <div v-if="searchSuggestion" class="mb-8">
+            <p class="text-gray-900 dark:text-white font-serif text-xl tracking-wide font-light">
+              Did you mean 
+              <button @click="applySuggestion(searchSuggestion)" class="text-theme-gold hover:text-gray-600 dark:hover:text-gray-300 underline underline-offset-4 decoration-theme-gold/50 transition-colors capitalize">
+                {{ searchSuggestion }}
+              </button>
+              ?
             </p>
-            
-            <div v-if="searchSuggestion" class="mb-8">
-              <p class="text-gray-900 dark:text-white font-serif text-xl tracking-wide font-light">
-                Did you mean 
-                <button @click="applySuggestion(searchSuggestion)" class="text-theme-gold hover:text-gray-600 dark:hover:text-gray-300 underline underline-offset-4 decoration-theme-gold/50 transition-colors capitalize">
-                  {{ searchSuggestion }}
-                </button>
-                ?
-              </p>
-            </div>
-            <div v-else class="mb-8">
-              <p class="text-gray-500 dark:text-gray-400 font-light text-sm tracking-widest uppercase">Please try adjusting your filters</p>
-            </div>
+          </div>
+          <div v-else class="mb-8">
+            <p class="text-gray-500 dark:text-gray-400 font-light text-sm tracking-widest uppercase">Please try adjusting your filters</p>
+          </div>
 
-            <button @click="searchQuery = ''; selectedCategory = 'All'; maxPrice = highestPrice" class="inline-block border border-gray-300 dark:border-white/20 hover:border-theme-gold dark:hover:border-theme-gold px-8 py-3 text-[10px] uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300 hover:text-theme-gold dark:hover:text-theme-gold transition-all duration-500 active:scale-[0.98]">
+            <button @click="resetFilters" class="inline-block border border-gray-300 dark:border-white/20 hover:border-theme-gold dark:hover:border-theme-gold px-8 py-3 text-[10px] uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300 hover:text-theme-gold dark:hover:text-theme-gold transition-all duration-500 active:scale-[0.98]">
               Reset All Filters
             </button>
-          </div>
-
-          <div v-else>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-20 max-w-[1400px] mx-auto px-4 md:px-8">
-              <WatchCard v-for="watch in filteredWatches" :key="watch.id" :watch="watch" />
-            </div>
-            
-            <div class="w-full border-t border-gray-200 dark:border-white/10 mt-20 pt-20 pb-32 text-center flex flex-col items-center">
-              <button @click="reopenPortal" class="inline-flex items-center gap-3 border border-gray-900 dark:border-white px-10 py-4 text-[10px] uppercase tracking-[0.3em] text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white transition-all duration-500 active:scale-[0.98] group">
-                View All Collections
-                <span class="transform group-hover:translate-x-1 transition-transform duration-300">&rarr;</span>
-              </button>
-            </div>
-          </div>
-
         </div>
-        
+
+        <div v-else>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-20 max-w-[1400px] mx-auto px-4 md:px-8">
+            <WatchCard v-for="watch in filteredWatches" :key="watch.id" :watch="watch" />
+          </div>
+
+          <div class="w-full border-t border-gray-200 dark:border-white/10 mt-20 pt-20 pb-20 text-center flex flex-col items-center">
+            <h3 class="font-serif text-3xl md:text-4xl font-light text-gray-900 dark:text-white tracking-wide mb-4">Want to explore more?</h3>
+            <p class="text-gray-400 dark:text-theme-muted text-[10px] uppercase tracking-[0.3em] mb-10">Discover other curations in our boutique</p>
+            
+            <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-4 md:gap-6">
+              
+              <button @click="reopenPortal" class="inline-flex items-center justify-center gap-3 border border-gray-900 dark:border-white px-10 py-4 text-[10px] uppercase tracking-[0.3em] text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white transition-all duration-500 active:scale-[0.98] group">
+                Top of Collections
+                <span class="transform group-hover:-translate-y-1 transition-transform duration-300">&uarr;</span>
+              </button>
+
+              <button @click="resetFilters" class="inline-flex items-center justify-center gap-3 border border-gray-900 dark:border-white px-10 py-4 text-[10px] uppercase tracking-[0.3em] text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white transition-all duration-500 active:scale-[0.98] group">
+                Reset Filters
+                <span class="transform group-hover:rotate-180 transition-transform duration-500 text-[14px]">↻</span>
+              </button>
+
+            </div>
+          </div>
+        </div>
+
       </div>
-    </transition>
+    </div>
   </div>
 </template>
