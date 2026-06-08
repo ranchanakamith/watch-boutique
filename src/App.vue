@@ -5,6 +5,9 @@ import { useCart } from './composables/useCart';
 import { useWishlist } from './composables/useWishlist';
 import { useAuth } from './composables/useAuth';
 
+// IMPORT THE FOOTER COMPONENT
+import SiteFooter from './components/SiteFooter.vue';
+
 const route = useRoute();
 const router = useRouter();
 
@@ -73,9 +76,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen transition-colors duration-700 bg-[white] dark:bg-theme-bg p-8 md:p-16 font-sans text-gray-900 dark:text-white selection:bg-theme-gold selection:text-black relative overflow-x-hidden">
+  <!-- ADDED: flex and flex-col, moved padding to the main tag -->
+  <div class="min-h-screen flex flex-col transition-colors duration-700 bg-[white] dark:bg-theme-bg font-sans text-gray-900 dark:text-white selection:bg-theme-gold selection:text-black relative overflow-x-hidden">
     
-    <div class="fixed top-6 right-2 md:top-12 md:right-19 flex items-center gap-5 sm:gap-6 z-40 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border   border border-gray-200/50 dark:border-white/10">
+    <div class="fixed top-6 right-2 md:top-12 md:right-19 flex items-center gap-5 sm:gap-6 z-40 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border border-gray-200/50 dark:border-white/10">
       
       <button v-if="!isAuthenticated" @click="openAuthModal('login')" class="text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors">
         Sign In
@@ -115,24 +119,31 @@ onMounted(() => {
       </button>
     </div>
 
-    <header class="mb-16 text-center mt-16 md:mt-20 flex flex-col items-center">
-      <h1 @click="route.path === '/' ? resetHomeFilters() : router.push('/')" class="animate-glow cursor-pointer text-3xl md:text-5xl font-serif text-gray-900 dark:text-white tracking-[0.25em] uppercase font-light mb-6 transition-colors duration-700 hover:text-theme-gold dark:hover:text-theme-gold">
-        The Premium <br class="md:hidden" /> Watch Boutique
-      </h1>
-      <div class="h-[1px] w-12 bg-theme-gold mb-8"></div>
-      
-      <nav class="flex items-center gap-8 text-[10px] uppercase tracking-[0.3em] font-medium">
-        <RouterLink to="/" @click="resetHomeFilters" class="text-gray-500 hover:text-theme-gold transition-colors pb-1 border-b border-transparent hover:border-theme-gold" active-class="text-theme-gold border-theme-gold">Home</RouterLink>
-        <RouterLink to="/about" class="text-gray-500 hover:text-theme-gold transition-colors pb-1 border-b border-transparent hover:border-theme-gold" active-class="text-theme-gold border-theme-gold">About</RouterLink>
-        <RouterLink to="/contact" class="text-gray-500 hover:text-theme-gold transition-colors pb-1 border-b border-transparent hover:border-theme-gold" active-class="text-theme-gold border-theme-gold">Contact</RouterLink>
-      </nav>
-    </header>
+    <!-- ADDED: Main wrapper with flex-grow and padding to push footer down -->
+    <main class="flex-grow flex flex-col p-8 md:p-16">
+      <header class="mb-16 text-center mt-16 md:mt-20 flex flex-col items-center">
+        <h1 @click="route.path === '/' ? resetHomeFilters() : router.push('/')" class="animate-glow cursor-pointer text-3xl md:text-5xl font-serif text-gray-900 dark:text-white tracking-[0.25em] uppercase font-light mb-6 transition-colors duration-700 hover:text-theme-gold dark:hover:text-theme-gold">
+          The Premium <br class="md:hidden" /> Watch Boutique
+        </h1>
+        <div class="h-[1px] w-12 bg-theme-gold mb-8"></div>
+        
+        <nav class="flex items-center gap-8 text-[10px] uppercase tracking-[0.3em] font-medium">
+          <RouterLink to="/" @click="resetHomeFilters" class="text-gray-500 hover:text-theme-gold transition-colors pb-1 border-b border-transparent hover:border-theme-gold" active-class="text-theme-gold border-theme-gold">Home</RouterLink>
+          <RouterLink to="/about" class="text-gray-500 hover:text-theme-gold transition-colors pb-1 border-b border-transparent hover:border-theme-gold" active-class="text-theme-gold border-theme-gold">About</RouterLink>
+          <RouterLink to="/contact" class="text-gray-500 hover:text-theme-gold transition-colors pb-1 border-b border-transparent hover:border-theme-gold" active-class="text-theme-gold border-theme-gold">Contact</RouterLink>
+        </nav>
+      </header>
 
-    <RouterView v-slot="{ Component }">
-      <component :is="Component" :key="$route.fullPath + refreshKey" />
-    </RouterView>
+      <RouterView v-slot="{ Component }">
+        <component :is="Component" :key="$route.fullPath + refreshKey" />
+      </RouterView>
+    </main>
 
-   <div v-if="isLoginModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center">
+    <!-- NEW FOOTER INTEGRATED HERE -->
+    <SiteFooter />
+
+    <!-- Modals and Sliders stay exactly the same below -->
+    <div v-if="isLoginModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center">
       <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity" @click="isLoginModalOpen = false"></div>
       
       <div class="relative backdrop-blur-2xl bg-white/40 dark:bg-theme-bg/50 w-full max-w-md p-10 shadow-[0_8px_32px_rgba(0,0,0,0.1)] border border-white/50 dark:border-white/10 rounded-xl animate-fade-in mx-4">
@@ -167,7 +178,7 @@ onMounted(() => {
               {{ isLoading ? 'Processing...' : (isRegisterMode ? 'Complete Registration' : 'Secure Sign In') }}
             </button>
 
-            <button type="button" @click="isRegisterMode = !isRegisterMode" class="w-full bg-white/20 dark:bg-black/20 border rounded-full border  border-gray-900/20 dark:border-white/20 text-gray-900 dark:text-white py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-white/40 dark:hover:bg-white/10 transition-colors backdrop-blur-md">
+            <button type="button" @click="isRegisterMode = !isRegisterMode" class="w-full bg-white/20 dark:bg-black/20 border rounded-full border border-gray-900/20 dark:border-white/20 text-gray-900 dark:text-white py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-white/40 dark:hover:bg-white/10 transition-colors backdrop-blur-md">
               {{ isRegisterMode ? 'Already have an account? Sign In' : 'Create an Account' }}
             </button>
           </div>
@@ -179,7 +190,7 @@ onMounted(() => {
    <div v-if="isWishlistOpen" @click="isWishlistOpen = false" class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[100] transition-opacity duration-500"></div>
     
     <div class="fixed top-0 right-0 h-full w-80 md:w-96 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 shadow-[20px_0_40px_rgba(0,0,0,0.08)] z-[110] transform transition-transform duration-700 ease-in-out border-l border-gray-200/50 dark:border-white/10 rounded-l-3xl p-8 flex flex-col" :class="isWishlistOpen ? 'translate-x-0' : 'translate-x-full'">
-                                                        
+                                                              
       <div class="flex justify-between items-center mb-8">
         <h3 class="font-serif text-2xl font-light">Wishlist</h3>
         <button @click="isWishlistOpen = false" class="text-2xl font-light hover:text-theme-gold transition-colors">&times;</button>
