@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
 
-// NEW: Function to force the window back to the top smoothly
 const scrollToTop = () => {
   window.scrollTo({
     top: 0,
@@ -27,12 +26,12 @@ const scrollToTop = () => {
           </p>
           
           <div class="flex gap-4">
-            <a href="#" class="w-10 h-10 rounded-full border border-gray-500 flex items-center justify-center hover:border-theme-gold hover:text-theme-gold text-gray-300 transition-colors duration-300">
+            <a href="https://www.facebook.com/share/18hAQUW1Aa/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full border border-gray-500 flex items-center justify-center hover:border-theme-gold hover:text-theme-gold text-gray-300 transition-colors duration-300">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"></path>
               </svg>
             </a>
-            <a href="#" class="w-10 h-10 rounded-full border border-gray-500 flex items-center justify-center hover:border-theme-gold hover:text-theme-gold text-gray-300 transition-colors duration-300">
+            <a href="https://www.instagram.com/timelesslx.lk?igsh=aWFkcTdjaWhnbnZz" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full border border-gray-500 flex items-center justify-center hover:border-theme-gold hover:text-theme-gold text-gray-300 transition-colors duration-300">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                 <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"></path>
