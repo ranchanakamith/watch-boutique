@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+// ADDED: computed to our vue imports
+import { ref, onMounted, computed } from 'vue';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'; 
 import { useCart } from './composables/useCart';
 import { useWishlist } from './composables/useWishlist';
 import { useAuth } from './composables/useAuth';
 
-// IMPORT THE FOOTER COMPONENT
 import SiteFooter from './components/SiteFooter.vue';
 
 const route = useRoute();
@@ -21,7 +21,7 @@ const isWishlistOpen = ref(false);
 
 // Modal States
 const isLoginModalOpen = ref(false);
-const isRegisterMode = ref(false); // Toggles between Login and Register views
+const isRegisterMode = ref(false);
 const authForm = ref({ name: '', username: '', password: '' });
 
 const refreshKey = ref(0);
@@ -42,7 +42,6 @@ const openAuthModal = (mode: 'login' | 'register') => {
   isRegisterMode.value = mode === 'register';
   authForm.value = { name: '', username: '', password: '' };
   
-  // Pre-fill dummy data ONLY on the login screen for testing convenience
   if (!isRegisterMode.value) {
     authForm.value.username = 'emilys';
     authForm.value.password = 'emilyspass';
@@ -51,7 +50,6 @@ const openAuthModal = (mode: 'login' | 'register') => {
   isLoginModalOpen.value = true;
 };
 
-// Handle Unified Form Submit
 const handleAuthSubmit = async () => {
   let success = false;
   
@@ -73,12 +71,26 @@ onMounted(() => {
     document.documentElement.classList.remove('dark');
   }
 });
+
+// NEW LOGIC: Check if the current page is a customer service page
+const isCustomerServicePage = computed(() => {
+  const servicePaths = ['/track-order', '/shipping', '/returns', '/warranty', '/faq'];
+  return servicePaths.includes(route.path);
+});
+
 </script>
 
 <template>
-  <!-- ADDED: flex and flex-col, moved padding to the main tag -->
   <div class="min-h-screen flex flex-col transition-colors duration-700 bg-[white] dark:bg-theme-bg font-sans text-gray-900 dark:text-white selection:bg-theme-gold selection:text-black relative overflow-x-hidden">
     
+    <RouterLink 
+      v-if="isCustomerServicePage" 
+      to="/" 
+      class="fixed top-6 left-2 md:top-12 md:left-19 z-40 flex items-center gap-2 z-40 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border border-gray-200/50 dark:border-white/10 text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors shadow-sm"
+    >
+      <span class="text-sm leading-none mb-[2px]">&larr;</span> Home
+    </RouterLink>
+
     <div class="fixed top-6 right-2 md:top-12 md:right-19 flex items-center gap-5 sm:gap-6 z-40 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border border-gray-200/50 dark:border-white/10">
       
       <button v-if="!isAuthenticated" @click="openAuthModal('login')" class="text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors">
@@ -119,9 +131,9 @@ onMounted(() => {
       </button>
     </div>
 
-    <!-- ADDED: Main wrapper with flex-grow and padding to push footer down -->
     <main class="flex-grow flex flex-col p-8 md:p-16">
-      <header class="mb-16 text-center mt-16 md:mt-20 flex flex-col items-center">
+      
+      <header v-if="!isCustomerServicePage" class="mb-16 text-center mt-16 md:mt-20 flex flex-col items-center">
         <h1 @click="route.path === '/' ? resetHomeFilters() : router.push('/')" class="animate-glow cursor-pointer text-3xl md:text-5xl font-serif text-gray-900 dark:text-white tracking-[0.25em] uppercase font-light mb-6 transition-colors duration-700 hover:text-theme-gold dark:hover:text-theme-gold">
           The Premium <br class="md:hidden" /> Watch Boutique
         </h1>
@@ -139,10 +151,8 @@ onMounted(() => {
       </RouterView>
     </main>
 
-    <!-- NEW FOOTER INTEGRATED HERE -->
     <SiteFooter />
 
-    <!-- Modals and Sliders stay exactly the same below -->
     <div v-if="isLoginModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center">
       <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity" @click="isLoginModalOpen = false"></div>
       

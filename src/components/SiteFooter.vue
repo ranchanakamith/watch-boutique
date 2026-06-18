@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
 
+// Smooth scroll to top animation upon navigation
 const scrollToTop = () => {
   window.scrollTo({
     top: 0,
@@ -47,23 +48,37 @@ const scrollToTop = () => {
         </div>
 
         <div class="md:col-span-6 lg:col-span-4">
-          <h3 class="text-theme-gold text-sm uppercase tracking-widest mb-6">Customer Service</h3>
+          <h3 class="font-serif text-theme-gold text-sm uppercase tracking-widest mb-6">Customer Service</h3>
           <ul class="space-y-4 text-gray-300 font-light text-sm tracking-wide">
-            <li><RouterLink to="/contact" @click="scrollToTop" class="hover:text-theme-gold transition-colors duration-300">Contact Us</RouterLink></li>
-            <li><a href="#" class="hover:text-theme-gold transition-colors duration-300">Track Order</a></li>
-            <li><a href="#" class="hover:text-theme-gold transition-colors duration-300">Shipping Information</a></li>
-            <li><a href="#" class="hover:text-theme-gold transition-colors duration-300">Returns & Exchanges</a></li>
-            <li><a href="#" class="hover:text-theme-gold transition-colors duration-300">Warranty</a></li>
-            <li><a href="#" class="hover:text-theme-gold transition-colors duration-300">FAQ</a></li>
+            <li>
+              <RouterLink to="/contact" @click="scrollToTop" class="hover:text-theme-gold transition-colors duration-300 block">Contact Us</RouterLink>
+            </li>
+            <li>
+              <RouterLink to="/track-order" @click="scrollToTop" class="hover:text-theme-gold transition-colors duration-300 block">Track Order</RouterLink>
+            </li>
+            <li>
+              <RouterLink to="/shipping" @click="scrollToTop" class="hover:text-theme-gold transition-colors duration-300 block">Shipping Information</RouterLink>
+            </li>
+            <li>
+              <RouterLink to="/returns" @click="scrollToTop" class="hover:text-theme-gold transition-colors duration-300 block">Returns & Exchanges</RouterLink>
+            </li>
+            <li>
+              <RouterLink to="/warranty" @click="scrollToTop" class="hover:text-theme-gold transition-colors duration-300 block">Warranty</RouterLink>
+            </li>
+            <li>
+              <RouterLink to="/faq" @click="scrollToTop" class="hover:text-theme-gold transition-colors duration-300 block">FAQ</RouterLink>
+            </li>
           </ul>
         </div>
 
         <div class="md:col-span-6 lg:col-span-3">
-          <h3 class="text-theme-gold text-sm uppercase tracking-widest mb-6">Legal</h3>
+          <h3 class="font-serif text-theme-gold text-sm uppercase tracking-widest mb-6">Legal</h3>
           <ul class="space-y-4 text-gray-300 font-light text-sm tracking-wide">
-            <li><a href="#" class="hover:text-theme-gold transition-colors duration-300">Privacy Policy</a></li>
-            <li><a href="#" class="hover:text-theme-gold transition-colors duration-300">Terms of Service</a></li>
-            <li><RouterLink to="/about" @click="scrollToTop" class="hover:text-theme-gold transition-colors duration-300">About Us</RouterLink></li>
+            <li><a href="#" class="hover:text-theme-gold transition-colors duration-300 block">Privacy Policy</a></li>
+            <li><a href="#" class="hover:text-theme-gold transition-colors duration-300 block">Terms of Service</a></li>
+            <li>
+              <RouterLink to="/about" @click="scrollToTop" class="hover:text-theme-gold transition-colors duration-300 block">About Us</RouterLink>
+            </li>
           </ul>
         </div>
 

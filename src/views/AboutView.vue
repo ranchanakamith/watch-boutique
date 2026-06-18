@@ -29,7 +29,7 @@
       
       <p class="text-theme-gold text-[10px] md:text-xs tracking-widest uppercase mb-8">Computer Engineer & Web Developer</p>
       
-      <p class="text-gray-600 dark:text-gray-300 font-light leading-relaxed tracking-wide mb-10 max-w-2xl mx-auto">
+      <p class=" text-gray-600 dark:text-gray-300 font-light leading-relaxed tracking-wide mb-10 max-w-2xl mx-auto">
         Currently a second-year undergraduate studying Computer Engineering at the University of Ruhuna, with a proud educational foundation rooted at Dharmaraja College. Kamith specializes in architecting modern, data-driven single-page applications. This boutique platform serves as a demonstration of seamless aesthetic design integrated with robust software engineering principles.
       </p>
       
