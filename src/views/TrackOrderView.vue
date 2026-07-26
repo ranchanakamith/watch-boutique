@@ -10,7 +10,7 @@
       <div class="h-px w-12 bg-theme-gold mx-auto mt-6"></div>
     </div>
 
-    <div class="max-w-md mx-auto bg-gray-50 dark:bg-theme-card p-8 border border-gray-100 dark:border-white/10 rounded-sm shadow-sm">
+    <div class="max-w-md mx-auto bg-gray-50 dark:bg-theme-card  p-8 border rounded-xl border-gray-100 dark:border-white/10 rounded-sm shadow-sm">
       <p class="text-center text-xs text-gray-500 dark:text-gray-400 font-light tracking-widest uppercase mb-8">
         Enter your details to track your delivery
       </p>
@@ -24,7 +24,7 @@
           <label class="text-[10px] uppercase tracking-[0.2em] text-gray-600 dark:text-gray-400">Email Address</label>
           <input type="email" placeholder="john@example.com" class="bg-transparent border-b border-gray-400/50 dark:border-white/20 focus:border-theme-gold outline-none py-2 text-sm font-light transition-colors text-gray-900 dark:text-white placeholder-gray-500/50" required />
         </div>
-        <button type="submit" class="mt-4 w-full bg-theme-gold text-white dark:text-theme-bg py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-theme-gold/80 transition-colors">
+        <button type="submit" class="mt-4 w-full rounded-full border bg-theme-gold text-white dark:text-theme-bg py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-theme-gold/80 transition-colors">
           Track Package
         </button>
       </form>

@@ -19,7 +19,7 @@ const scrollToTop = () => {
         <div class="md:col-span-12 lg:col-span-5">
           <RouterLink to="/" @click="scrollToTop">
             <h2 class="font-serif text-2xl text-theme-gold tracking-widest mb-6 uppercase hover:text-white transition-colors cursor-pointer">
-              Timeless
+              WATCH BOTIQUE
             </h2>
           </RouterLink>
           <p class="text-[11px] text-gray-300 font-light tracking-[0.15em] mb-8 max-w-sm uppercase leading-loose">
@@ -82,17 +82,6 @@ const scrollToTop = () => {
           </ul>
         </div>
 
-      </div>
-
-      <div class="border-t border-white/10 pt-8 flex flex-col items-center justify-center text-center gap-3">
-        <p class="text-gray-400 text-sm font-light tracking-wide">
-          &copy; 2026 Timeless. All rights reserved.
-        </p>
-        <p class="text-gray-500 text-xs font-light tracking-wide flex items-center justify-center flex-wrap gap-1">
-          Powered by 
-          <span class="text-theme-gold border border-theme-gold/40 px-1.5 py-0.5 mx-1 tracking-widest">BTECHZO</span>
-          , Shamith Samaraweera & Kamith Samaraweera
-        </p>
       </div>
 
     </div>
