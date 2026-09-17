@@ -12,7 +12,7 @@ const isFirstLoad = ref(true);
 </script>
 
 <script setup lang="ts">
-import { onMounted, computed, watchEffect } from 'vue';
+import { onMounted, onUnmounted, computed, watchEffect, watch } from 'vue';
 import { useWatches } from '../composables/useWatches';
 import WatchCard from '../components/WatchCard.vue';
 import SidebarFilter from '../components/SidebarFilter.vue';
@@ -21,6 +21,33 @@ import WelcomePortal from '../components/WelcomePortal.vue';
 const { watches, isLoading, error, fetchWatches } = useWatches();
 
 const productGrid = ref<HTMLElement | null>(null);
+
+// Reusable scroll function
+const scrollToGrid = () => {
+  if (productGrid.value) {
+    productGrid.value.scrollIntoView({ behavior: 'smooth' });
+  }
+};
+
+// FIXED: Flawless Global Enter Listener using 'keyup'
+const handleGlobalEnter = (e: KeyboardEvent) => {
+  if (e.key === 'Enter') {
+    const target = e.target as HTMLElement;
+    
+    // Check if they just hit Enter while inside a search input
+    if (target && target.tagName === 'INPUT') {
+      
+      // 1. Unfocus the input to instantly drop the mobile keyboard
+      target.blur(); 
+      
+      // 2. We wait 300ms before scrolling. This gives your Sidebar time 
+      // to close its mobile menu completely before the screen moves!
+      setTimeout(() => {
+        scrollToGrid();
+      }, 300);
+    }
+  }
+};
 
 // --- PORTAL LOGIC ---
 const isReturnVisit = ref(sessionStorage.getItem('hasVisited') === 'true');
@@ -34,9 +61,7 @@ const handleStoreEntry = (category: string) => {
   sessionStorage.setItem('hasVisited', 'true');
   isReturnVisit.value = true;
   
-  if (productGrid.value) {
-    productGrid.value.scrollIntoView({ behavior: 'smooth' });
-  }
+  scrollToGrid();
 };
 
 const reopenPortal = () => {
@@ -46,21 +71,28 @@ const reopenPortal = () => {
 
 const viewAllWatches = () => {
   selectedCategory.value = 'All';
-  if (productGrid.value) {
-    productGrid.value.scrollIntoView({ behavior: 'smooth' });
-  }
+  scrollToGrid();
 };
 
-// NEW: Dedicated Reset Filters Function
 const resetFilters = () => {
   searchQuery.value = '';
   selectedCategory.value = 'All';
   maxPrice.value = highestPrice.value;
   
-  if (productGrid.value) {
-    productGrid.value.scrollIntoView({ behavior: 'smooth' });
-  }
+  scrollToGrid();
 };
+// -------------------------
+
+// --- SCROLL WATCHERS ---
+let priceTimer: any;
+watch(maxPrice, (newVal, oldVal) => {
+  if (oldVal === 10000 && newVal === highestPrice.value) return;
+  
+  clearTimeout(priceTimer);
+  priceTimer = setTimeout(() => {
+    scrollToGrid();
+  }, 400);
+});
 // -------------------------
 
 const availableCategories = computed(() => {
@@ -148,12 +180,22 @@ const searchSuggestion = computed(() => {
 
 const applySuggestion = (suggestion: string) => {
   searchQuery.value = suggestion;
+  
+  setTimeout(() => {
+    scrollToGrid();
+  }, 50);
 };
 
+// FIXED: We now listen for 'keyup' instead of 'keydown' to prevent event stealing!
 onMounted(() => {
   if (watches.value.length === 0) {
     fetchWatches();
   }
+  window.addEventListener('keyup', handleGlobalEnter);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keyup', handleGlobalEnter);
 });
 </script>
 
@@ -164,6 +206,7 @@ onMounted(() => {
 
     <div ref="productGrid" class="w-full min-h-screen pt-20 border-t border-gray-100 dark:border-white/5">
       
+      <!-- We removed the wrapper div, letting the Sidebar handle itself perfectly -->
       <SidebarFilter 
         v-model:searchQuery="searchQuery" 
         v-model:selectedCategory="selectedCategory" 
@@ -225,7 +268,7 @@ onMounted(() => {
             <WatchCard v-for="watch in filteredWatches" :key="watch.id" :watch="watch" />
           </div>
 
-          <div class="w-full border-t border-gray-200 dark:border-white/10 mt-20 pt-20 pb-20 text-center flex flex-col items-center">
+          <div class="w-full border-t border-gray-200 dark:border-white/10 mt-32 pt-24 pb-32 text-center flex flex-col items-center">
             <h3 class="font-serif text-3xl md:text-4xl font-light text-gray-900 dark:text-white tracking-wide mb-4">Want to explore more?</h3>
             <p class="text-gray-400 dark:text-theme-muted text-[10px] uppercase tracking-[0.3em] mb-10">Discover other curations in our boutique</p>
             
@@ -236,7 +279,11 @@ onMounted(() => {
                 <span class="transform group-hover:-translate-y-1 transition-transform duration-300">&uarr;</span>
               </button>
 
-              <button @click="resetFilters" class="inline-flex items-center justify-center gap-3 border border-gray-900 dark:border-white px-10 py-4 text-[10px] uppercase tracking-[0.3em] text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white transition-all duration-500 active:scale-[0.98] group">
+              <button @click="viewAllWatches" class="inline-flex items-center justify-center gap-3 border border-gray-900 dark:border-white px-10 py-4 text-[10px] uppercase tracking-[0.3em] bg-gray-900 text-white dark:bg-white dark:text-theme-bg hover:bg-theme-gold hover:border-theme-gold dark:hover:bg-theme-gold dark:hover:text-white dark:hover:border-theme-gold transition-all duration-500 active:scale-[0.98]">
+                View All Watches
+              </button>
+
+              <button @click="resetFilters" class="inline-flex items-center justify-center gap-3 border border-gray-300 dark:border-white/20 px-10 py-4 text-[10px] uppercase tracking-[0.3em] text-gray-600 dark:text-gray-400 hover:text-theme-gold hover:border-theme-gold dark:hover:text-theme-gold transition-all duration-500 active:scale-[0.98] group">
                 Reset Filters
                 <span class="transform group-hover:rotate-180 transition-transform duration-500 text-[14px]">↻</span>
               </button>
