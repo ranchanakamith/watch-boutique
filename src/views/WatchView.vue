@@ -9,7 +9,7 @@ import WatchCard from '../components/WatchCard.vue';
 const route = useRoute();
 const router = useRouter();
 
-const { watches, fetchWatches } = useWatches();
+const { watches, isLoading, error, fetchWatches } = useWatches();
 const { addToCart } = useCart();
 const { wishlist, toggleWishlist } = useWishlist();
 
@@ -103,7 +103,16 @@ onMounted(() => {
 
     <div class="animate-fade-in transition-colors duration-700 max-w-[1200px] mx-auto mt-10 md:mt-20">
       
-      <div v-if="watch" class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 px-4 md:px-0 mt-24 mb-32">
+      <div v-if="isLoading && !watch" class="text-center py-32">
+        <p class="text-gray-500 uppercase tracking-widest text-sm">Loading timepiece details...</p>
+      </div>
+
+      <div v-else-if="error" class="text-center py-32">
+        <p class="text-red-500 uppercase tracking-widest text-sm mb-4">Unable to load timepiece details.</p>
+        <p class="text-gray-500 text-xs">{{ error }}</p>
+      </div>
+
+      <div v-else-if="watch" class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 px-4 md:px-0 mt-24 mb-32">
         
         <div class="relative bg-gray-50 dark:bg-theme-card p-12 flex items-center justify-center min-h-[400px] md:min-h-[600px] border border-gray-100 dark:border-white/5 rounded-sm">
           <button @click="handleToggleWishlist" class="absolute top-6 right-6 z-10 text-gray-400 hover:text-theme-gold transition-colors">

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import AboutView from '../views/AboutView.vue'
 import ContactView from '../views/ContactView.vue'
+import WatchView from '../views/WatchView.vue'
 
 // Import the new views
 import TrackOrderView from '../views/TrackOrderView.vue'
@@ -33,6 +34,12 @@ const router = createRouter({
       path: '/contact',
       name: 'contact',
       component: ContactView
+    },
+    {
+      path: '/watch/:id',
+      name: 'watch',
+      component: WatchView,
+      props: true
     },
     // Add the new routes here
     {

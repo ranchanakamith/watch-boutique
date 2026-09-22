@@ -74,7 +74,7 @@ const handleToggleWishlist = () => {
 };
 
 const goToWatchInfo = () => {
-  router.push(`/watch/${props.watch.id}`);
+  router.push({ name: 'watch', params: { id: props.watch.id } });
 };
 </script>
 
