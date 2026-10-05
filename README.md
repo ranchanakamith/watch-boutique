@@ -1,42 +1,60 @@
-# watch-boutique
+# Watch Boutique
 
-This template should help get you started developing with Vue 3 in Vite.
+The project at `D:\watch\watch-boutique` has two independent applications:
 
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
+```text
+watch-boutique/
+  frontend/
+    src/                 Vue pages, components and composables
+    public/              Images and other public assets
+    package.json         Frontend dependencies and commands
+    package-lock.json    Frontend dependency lockfile
+    vite.config.ts       Frontend dev server and API proxy
+    README.md
+  backend/
+    index.js             Express server entry point
+    app.js               Authentication and product APIs
+    auth.js              Password hashing and session helpers
+    db.js                SQLite schema and database helpers
+    data/                Existing SQLite database (ignored by Git)
+    test/                Backend integration tests
+    package.json         Backend dependencies and commands
+    package-lock.json    Backend dependency lockfile
+    .env.example         Backend environment configuration
+    README.md
 ```
 
-### Compile and Hot-Reload for Development
+Use Node.js 24 or newer. Each folder has its own dependencies and can be installed separately. Existing root `node_modules` and `dist` folders are legacy generated files; the separated applications use their own installations and builds.
 
-```sh
-npm run dev
+## Start backend — terminal 1
+
+```powershell
+cd D:\watch\watch-boutique\backend
+npm.cmd ci
+npm.cmd run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+API: http://127.0.0.1:3000. The existing database was moved to `backend/data/boutique.sqlite`; users, sessions and products are preserved. On a fresh copy without a database, run `npm.cmd run db:seed` once from the backend folder to create six sample products.
 
-```sh
-npm run build
+## Start frontend — terminal 2
+
+```powershell
+cd D:\watch\watch-boutique\frontend
+npm.cmd ci
+npm.cmd run dev
 ```
+
+Website: http://localhost:5173. The frontend proxies `/api` to the backend, so both servers must be running. Stop an old Vite server before starting the relocated frontend if port 5173 is already occupied. On Linux/macOS use `npm` instead of `npm.cmd`.
+
+Register through the website to create an account. To grant product management access after registration, run `npm.cmd run admin -- your-email@example.com` from the backend folder. See `backend/README.md` for API routes and request examples. An administrator UI is not included.
+
+## Check the projects
+
+```powershell
+cd D:\watch\watch-boutique\backend
+npm.cmd test
+cd ..\frontend
+npm.cmd run build
+```
+
+The frontend production build is written to `frontend/dist`. Backend configuration belongs in `backend/.env`, using `backend/.env.example` as a template. Keep private `.env` files and the SQLite database out of Git. Docker setup remains a separate next step.

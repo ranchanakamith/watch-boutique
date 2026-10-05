@@ -13,7 +13,12 @@ const router = useRouter();
 
 const { cart, removeFromCart, clearCart, cartTotal, cartItemCount } = useCart();
 const { wishlist, toggleWishlist, removeFromWishlist, clearWishlist } = useWishlist();
-const { isAuthenticated, user, isLoading, login, register, logout } = useAuth();
+const { isAuthenticated, user, isLoading, error: authError, login, register, logout: signOut, restoreSession } = useAuth();
+
+const logout = async () => {
+  await signOut();
+  if (authError.value) alert(authError.value);
+};
 
 const isDarkMode = ref(false); 
 const isCartOpen = ref(false);
@@ -42,10 +47,7 @@ const openAuthModal = (mode: 'login' | 'register') => {
   isRegisterMode.value = mode === 'register';
   authForm.value = { name: '', username: '', password: '' };
   
-  if (!isRegisterMode.value) {
-    authForm.value.username = 'emilys';
-    authForm.value.password = 'emilyspass';
-  }
+  authError.value = null;
   
   isLoginModalOpen.value = true;
 };
@@ -61,10 +63,13 @@ const handleAuthSubmit = async () => {
 
   if (success) {
     isLoginModalOpen.value = false;
+  } else if (authError.value) {
+    alert(authError.value);
   }
 };
 
 onMounted(() => {
+  void restoreSession();
   if (isDarkMode.value) {
     document.documentElement.classList.add('dark');
   } else {

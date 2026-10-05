@@ -1,5 +1,5 @@
 {
-  "name": "watch-boutique",
+  "name": "watch-boutique-frontend",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -30,6 +30,6 @@
     "vue-tsc": "^3.2.6"
   },
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": ">=24.0.0"
   }
 }

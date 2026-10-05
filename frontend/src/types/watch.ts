@@ -14,7 +14,7 @@ export interface Watch {
   images: string[];
 }
 
-// 2. The interface for the DummyJSON response wrapper
+// Paginated product API response.
 export interface WatchResponse {
   products: Watch[];
   total: number;

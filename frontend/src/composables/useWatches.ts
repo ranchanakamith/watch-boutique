@@ -11,15 +11,17 @@ export function useWatches() {
     error.value = null;
 
     try {
-      const response = await fetch('https://dummyjson.com/products/search?q=watch');
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch data: ${response.statusText}`);
-      }
-
-      const data = (await response.json()) as WatchResponse;
-      const luxurySortedWatches = data.products.sort((a, b) => b.price - a.price);
-      watches.value = luxurySortedWatches;
+      const products: Watch[] = [];
+      let total = 0;
+      do {
+        const response = await fetch(`/api/products?limit=100&skip=${products.length}`);
+        if (!response.ok) throw new Error('Unable to load the catalogue. Please try again.');
+        const data = (await response.json()) as WatchResponse;
+        products.push(...data.products);
+        total = data.total;
+        if (data.products.length === 0) break;
+      } while (products.length < total);
+      watches.value = products.sort((a, b) => b.price - a.price);
       
     } catch (err: unknown) {
       if (err instanceof Error) {
