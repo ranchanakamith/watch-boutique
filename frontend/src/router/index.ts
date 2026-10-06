@@ -5,7 +5,7 @@ import ContactView from '../views/ContactView.vue'
 import WatchView from '../views/WatchView.vue'
 
 // Import the new views
-import TrackOrderView from '../views/TrackOrderView.vue'
+
 import ShippingView from '../views/ShippingView.vue'
 import ReturnsView from '../views/ReturnsView.vue'
 import WarrantyView from '../views/WarrantyView.vue'
@@ -20,6 +20,9 @@ const router = createRouter({
   },
 
   routes: [
+    { path: '/checkout', component: () => import('../views/CheckoutView.vue') },
+    { path: '/orders', component: () => import('../views/OrdersView.vue') },
+    { path: '/admin', component: () => import('../views/AdminView.vue') },
     {
       path: '/',
       name: 'home',
@@ -45,7 +48,7 @@ const router = createRouter({
     {
       path: '/track-order',
       name: 'track-order',
-      component: TrackOrderView
+      component: () => import('../views/TrackOrderView.vue')
     },
     {
       path: '/shipping',

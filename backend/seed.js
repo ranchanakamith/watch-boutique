@@ -1,21 +1,23 @@
+import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { openDatabase, insertProduct } from './db.js';
-
-const db = openDatabase();
-try {
-  db.exec('BEGIN IMMEDIATE');
-  if (db.prepare('SELECT count(*) AS count FROM products').get().count > 0) {
-    console.log('Products already exist; seed skipped.');
-  } else {
-    for (const [title, price, brand, category, stock] of [
-      ['Heritage Automatic', 1250, 'Boutique', 'mens-watches', 12],
-      ['Classic Chronograph', 850, 'Boutique', 'mens-watches', 20],
-      ['Ocean Sport', 650, 'Boutique', 'mens-watches', 18],
-      ['Rose Elegance', 980, 'Atelier', 'womens-watches', 10],
-      ['Silver Petite', 490, 'Atelier', 'womens-watches', 25],
-      ['Midnight Dress', 720, 'Atelier', 'womens-watches', 15],
-    ]) insertProduct(db, { title, price, brand, category, stock, description: `${title}: a sample timepiece for your boutique. Replace this demonstration listing with your actual product details.`, discountPercentage: 0, rating: 0, thumbnail: '/sample-watch.svg', images: ['/sample-watch.svg'] });
-    console.log('Created six demonstration products.');
-  }
-  db.exec('COMMIT');
-} catch (error) { db.exec('ROLLBACK'); throw error; }
-finally { db.close(); }
+import { transaction } from './commerce.js';
+export function seedCatalog(db) {
+  const catalog = JSON.parse(readFileSync(new URL('./catalog.json', import.meta.url), 'utf8'));
+  return transaction(db, () => {
+    let added = 0;
+    for (const { id, ...item } of catalog.products) {
+      const key = `dummyjson:${id}`;
+      if (db.prepare('SELECT 1 FROM catalog_imports WHERE source_key = ?').get(key)) continue;
+      const product = insertProduct(db, { ...item, discountPercentage: 0, rating: 0, description: `[Sample catalog] ${item.description}` });
+      db.prepare('INSERT INTO catalog_imports (source_key, product_id) VALUES (?, ?)').run(key, product.id);
+      added++;
+    }
+    return added;
+  });
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const db = openDatabase();
+  try { console.log(`Imported ${seedCatalog(db)} sample watches. Existing listings were preserved.`); }
+  finally { db.close(); }
+}

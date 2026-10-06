@@ -1,25 +1,37 @@
 import { ref, computed, watch } from 'vue';
+import { salePrice } from './useShopApi';
 import type { Watch } from '../types/watch';
 
 export interface CartItem extends Watch {
   quantity: number;
 }
 
-const savedCart = localStorage.getItem('boutique_cart');
-const cart = ref<CartItem[]>(savedCart ? JSON.parse(savedCart) : []);
+function readCart(): CartItem[] {
+  try { const value = JSON.parse(localStorage.getItem('boutique_cart') || '[]');
+    return Array.isArray(value) ? value.filter(i => i && Number.isSafeInteger(i.id) && Number.isSafeInteger(i.quantity) && i.quantity > 0 && i.quantity <= 99 && typeof i.price === 'number' && Number.isFinite(i.price)) : [];
+  } catch { return []; }
+}
+const cart = ref<CartItem[]>(readCart());
 
 watch(cart, (newCart) => {
-  localStorage.setItem('boutique_cart', JSON.stringify(newCart));
+  try { localStorage.setItem('boutique_cart', JSON.stringify(newCart)); } catch { /* Keep the in-memory bag usable. */ }
 }, { deep: true });
 
 export function useCart() {
   const addToCart = (watch: Watch) => {
     const existingItem = cart.value.find(item => item.id === watch.id);
+    if (watch.stock <= 0 || (existingItem?.quantity || 0) >= Math.min(watch.stock, 99)) { alert('No more stock is available for this watch.'); return false; }
     if (existingItem) {
-      existingItem.quantity++;
+      Object.assign(existingItem, watch, { quantity: existingItem.quantity + 1 });
     } else {
       cart.value.push({ ...watch, quantity: 1 });
     }
+    return true;
+  };
+
+  const setQuantity = (id: number, quantity: number) => {
+    const item = cart.value.find(i => i.id === id);
+    if (item && Number.isSafeInteger(quantity)) item.quantity = Math.max(1, Math.min(quantity, item.stock || 1, 99));
   };
 
   const removeFromCart = (id: number) => {
@@ -32,7 +44,7 @@ export function useCart() {
   };
 
   const cartTotal = computed(() => {
-    return cart.value.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cart.value.reduce((total, item) => total + (salePrice(item) * item.quantity), 0);
   });
 
   const cartItemCount = computed(() => {
@@ -40,5 +52,5 @@ export function useCart() {
   });
 
   // Remember to export the new clearCart function!
-  return { cart, addToCart, removeFromCart, clearCart, cartTotal, cartItemCount };
+  return { setQuantity, cart, addToCart, removeFromCart, clearCart, cartTotal, cartItemCount };
 }

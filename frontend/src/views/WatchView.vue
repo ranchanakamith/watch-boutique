@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch as vueWatch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useWatches } from '../composables/useWatches';
+import { salePrice } from '../composables/useShopApi';
 import { useCart } from '../composables/useCart';
 import { useWishlist } from '../composables/useWishlist';
 import WatchCard from '../components/WatchCard.vue';
@@ -57,7 +58,7 @@ const heartAnim = ref(false);
 
 const handleAddToCart = () => {
   if (!watch.value) return;
-  addToCart(watch.value);
+  if (!addToCart(watch.value)) return;
   isAddingToBag.value = true;
   setTimeout(() => {
     isAddingToBag.value = false;
@@ -70,7 +71,7 @@ const handleBuyNow = () => {
   isBuyingNow.value = true;
   setTimeout(() => {
     isBuyingNow.value = false;
-    alert(`Proceeding to Secure Checkout for ${watch.value!.title}...`);
+    void router.push('/checkout');
   }, 600);
 };
 
@@ -134,7 +135,7 @@ onMounted(() => {
         <div class="flex flex-col justify-center">
           <span class="text-[10px] uppercase tracking-[0.4em] text-gray-400 dark:text-theme-muted mb-4">{{ watch.brand || 'Premium Collection' }}</span>
           <h2 class="font-serif text-3xl md:text-5xl text-gray-900 dark:text-white mb-6 font-light tracking-wide leading-tight">{{ watch.title }}</h2>
-          <p class="text-theme-gold text-xl tracking-widest mb-10">${{ watch.price.toLocaleString() }}</p>
+          <p class="text-theme-gold text-xl tracking-widest mb-10">${{ salePrice(watch).toLocaleString() }}</p>
           
           <div class="h-[1px] w-full bg-gray-200 dark:bg-white/10 mb-10"></div>
           
@@ -143,15 +144,15 @@ onMounted(() => {
           </p>
 
           <div class="flex flex-col sm:flex-row gap-4 w-full">
-            <button @click="handleAddToCart" 
+            <button :disabled="watch.stock <= 0" @click="handleAddToCart"
                     :class="[
                       'flex-1 py-4 text-xs uppercase tracking-[0.2em] transition-all duration-300 border rounded-full active:scale-[0.98]',
                       isAddingToBag ? 'bg-theme-gold border-theme-gold text-white dark:text-theme-bg' : 'bg-transparent border-gray-900 dark:border-white text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white dark:hover:text-theme-bg'
                     ]">
-              {{ isAddingToBag ? 'Added to Bag ✓' : 'Add to Bag' }}
+              {{ isAddingToBag ? 'Added to Bag ✓' : (watch.stock <= 0 ? 'Sold out' : 'Add to Bag') }}
             </button>
 
-            <button @click="handleBuyNow" 
+            <button :disabled="watch.stock <= 0" @click="handleBuyNow"
                     :class="[
                       'flex-1 py-4 text-xs uppercase tracking-[0.2em] transition-all duration-300 border active:scale-[0.98] bg-theme-gold rounded-full border-theme-gold text-white dark:text-theme-bg hover:opacity-80',
                       isBuyingNow ? 'animate-pulse' : ''

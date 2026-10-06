@@ -2,6 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import { randomBytes } from 'node:crypto';
+import { registerCommerce } from './commerce.js';
 import { productFromRow, insertProduct } from './db.js';
 import { hashPassword, verifyPassword, digest, publicUser, readToken } from './auth.js';
 
@@ -139,8 +140,10 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
     db.prepare('DELETE FROM products WHERE id = ?').run(req.productId);
     res.status(204).end();
   });
+  registerCommerce(app, db, requireUser, requireAdmin);
   app.use('/api', (req, res) => res.status(404).json({ message: 'API route not found.' }));
   app.use((err, req, res, next) => {
+    if (err.errcode === 13 || /database or disk is full/i.test(err.message)) return res.status(507).json({ message: 'Local storage limit reached. Contact the administrator before adding more data.' });
     const status = err.status >= 400 && err.status < 500 ? err.status : 500;
     if (status === 500) console.error(err);
     res.status(status).json({ message: status === 500 ? 'An unexpected server error occurred.' : (err.type === 'entity.parse.failed' ? 'Invalid JSON body.' : err.message) });

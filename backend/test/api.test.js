@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { openDatabase } from '../db.js';
 import { createApp } from '../app.js';
+import { seedCatalog } from '../seed.js';
 
 const product = { title: 'Test Watch', description: 'A test timepiece', brand: 'Boutique', category: 'mens-watches', price: 100, stock: 4, thumbnail: '/sample-watch.svg', images: ['/sample-watch.svg'] };
 async function fixture(t, db = openDatabase(':memory:'), options) {
@@ -20,6 +21,97 @@ async function fixture(t, db = openDatabase(':memory:'), options) {
   return { db, request };
 }
 const account = { email: 'client@example.com', password: 'correct horse battery', name: 'Client' };
+const shipping = { name: 'Customer', phone: '0123456789', address: '12 Test Road', city: 'Test City', postalCode: '10000', country: 'Test Country' };
+
+test('checkout uses server prices, retries are idempotent, access is private and cancellation restocks once', async t => {
+  const { db, request } = await fixture(t);
+  const { cookie } = await request('/api/auth/register', { method: 'POST', body: account });
+  db.prepare("UPDATE users SET role = 'admin'").run();
+  const watch = (await request('/api/products', { method: 'POST', body: { ...product, discountPercentage: 10 }, cookie })).data;
+  const other = await request('/api/auth/register', { method: 'POST', body: { ...account, email: 'other@example.com' } });
+  assert.equal((await request('/api/admin/summary', { cookie: other.cookie })).status, 403);
+  assert.equal((await request('/api/admin/orders', { cookie: other.cookie })).status, 403);
+  const body = { items: [{ productId: watch.id, quantity: 2, price: 1 }], shipping, requestKey: 'checkout-request-0001', total: 1 };
+  const placed = await request('/api/orders', { method: 'POST', cookie, body });
+  assert.equal(placed.status, 201);
+  assert.equal(placed.data.total_cents, 18000);
+  assert.equal(placed.data.payment_status, 'unpaid');
+  assert.equal((await request(`/api/products/${watch.id}`)).data.stock, 2);
+  assert.equal((await request('/api/orders', { method: 'POST', cookie, body })).data.id, placed.data.id);
+  assert.equal((await request(`/api/products/${watch.id}`)).data.stock, 2);
+  assert.equal((await request('/api/orders', { method: 'POST', cookie, body: { ...body, shipping: { ...shipping, city: 'Changed' } } })).status, 409);
+  assert.equal((await request(`/api/orders/${placed.data.id}`, { cookie: other.cookie })).status, 404);
+  assert.equal((await request(`/api/orders/${placed.data.id}/cancel`, { method: 'POST', cookie: other.cookie })).status, 404);
+  assert.equal((await request('/api/orders', { cookie: other.cookie })).data.orders.length, 0);
+  assert.equal((await request(`/api/orders/${placed.data.id}/cancel`, { method: 'POST', cookie })).status, 200);
+  assert.equal((await request(`/api/products/${watch.id}`)).data.stock, 4);
+  assert.equal((await request(`/api/orders/${placed.data.id}/cancel`, { method: 'POST', cookie })).status, 409);
+  assert.equal((await request('/api/admin/summary', { cookie })).data.bookedCents, 0);
+});
+
+test('checkout is atomic, rejects malformed items and prevents overselling', async t => {
+  const { db, request } = await fixture(t);
+  const { cookie } = await request('/api/auth/register', { method: 'POST', body: account });
+  db.prepare("UPDATE users SET role = 'admin'").run();
+  const p = (await request('/api/products', { method: 'POST', body: { ...product, stock: 1 }, cookie })).data;
+  const body = { items: [{ productId: p.id, quantity: 1 }], shipping, requestKey: 'atomic-checkout-0001' };
+  for (const items of [[], [null], [{ productId: p.id, quantity: -1 }], [{ productId: p.id, quantity: 1.5 }], [body.items[0], body.items[0]]]) {
+    assert.equal((await request('/api/orders', { method: 'POST', cookie, body: { ...body, items } })).status, 400);
+  }
+  assert.equal((await request('/api/orders', { method: 'POST', cookie, body: { ...body, items: [...body.items, { productId: 99999, quantity: 1 }] } })).status, 409);
+  assert.equal((await request(`/api/products/${p.id}`)).data.stock, 1);
+  const results = await Promise.all(['atomic-checkout-0002', 'atomic-checkout-0003'].map(requestKey => request('/api/orders', { method: 'POST', cookie, body: { ...body, requestKey } })));
+  assert.deepEqual(results.map(r => r.status).sort(), [201,409]);
+  assert.equal((await request(`/api/products/${p.id}`)).data.stock, 0);
+  assert.equal((await request('/api/orders', { cookie })).data.orders.length, 1);
+});
+
+test('fulfillment transitions, payment totals and historical receipts after deletion', async t => {
+  const { db, request } = await fixture(t);
+  const { cookie } = await request('/api/auth/register', { method: 'POST', body: account });
+  db.prepare("UPDATE users SET role = 'admin'").run();
+  const p = (await request('/api/products', { method: 'POST', cookie, body: product })).data;
+  const order = (await request('/api/orders', { method: 'POST', cookie, body: { items: [{ productId: p.id, quantity: 1 }], shipping, requestKey: 'fulfill-request-0001' } })).data;
+  const path = `/api/admin/orders/${order.id}`;
+  assert.equal((await request(path, { method: 'PATCH', cookie, body: { payment_status: 'paid' } })).status, 400);
+  assert.equal((await request(path, { method: 'PATCH', cookie, body: { status: 'delivered' } })).status, 409);
+  for (const status of ['processing','shipped','delivered']) assert.equal((await request(path, { method: 'PATCH', cookie, body: { status, tracking: 'SHIP-123' } })).status, 200);
+  assert.equal((await request(`/api/orders/${order.id}/cancel`, { method: 'POST', cookie })).status, 409);
+  assert.equal((await request(path, { method: 'PATCH', cookie, body: { payment_status: 'paid' } })).status, 200);
+  assert.equal((await request(path, { method: 'PATCH', cookie, body: { payment_status: 'unpaid' } })).status, 400);
+  const summary = (await request('/api/admin/summary', { cookie })).data;
+  assert.equal(summary.paidCents, 10000); assert.equal(summary.bookedCents, 10000);
+  assert.equal(summary.dailySales[0].cents, 10000);
+  assert.equal((await request(`/api/products/${p.id}`, { method: 'DELETE', cookie })).status, 204);
+  const receipt = (await request(`/api/orders/${order.id}`, { cookie })).data;
+  assert.equal(receipt.items[0].title, product.title); assert.equal(receipt.items[0].product_id, null);
+  assert.equal(receipt.tracking, 'SHIP-123');
+});
+
+test('seed is repeatable and preserves edits and deliberately deleted imported products', () => {
+  const db = openDatabase(':memory:');
+  try {
+    assert.equal(seedCatalog(db), 11); assert.equal(seedCatalog(db), 0);
+    db.prepare("UPDATE products SET title = 'Owner edited', stock = 2 WHERE id = 1").run();
+    db.prepare('DELETE FROM products WHERE id = 2').run();
+    assert.equal(seedCatalog(db), 0);
+    assert.equal(db.prepare('SELECT count(*) AS total FROM products').get().total, 10);
+    assert.equal(db.prepare('SELECT title FROM products WHERE id = 1').get().title, 'Owner edited');
+  } finally { db.close(); }
+});
+
+test('database page limit is installed and full-disk writes return a useful error', async t => {
+  const { db, request } = await fixture(t);
+  const pageSize = db.prepare('PRAGMA page_size').get().page_size;
+  assert.ok(db.prepare('PRAGMA max_page_count').get().max_page_count * pageSize <= 80_000_000);
+  const { cookie } = await request('/api/auth/register', { method: 'POST', body: account });
+  db.prepare("UPDATE users SET role = 'admin'").run();
+  const pages = db.prepare('PRAGMA page_count').get().page_count;
+  db.exec(`PRAGMA max_page_count = ${pages}`);
+  const result = await request('/api/products', { method: 'POST', cookie, body: { ...product, description: 'x'.repeat(5000) } });
+  assert.equal(result.status, 507);
+  assert.equal(db.prepare('SELECT count(*) AS count FROM products').get().count, 0);
+});
 
 test('registration, normalized email, password hashing, login, restore, rotation and logout', async t => {
   const { db, request } = await fixture(t);
@@ -110,12 +202,18 @@ test('users, products and sessions survive database and application restarts', a
       const { request, db } = await fixture(child, openDatabase(filename));
       ({ cookie } = await request('/api/auth/register', { method: 'POST', body: account }));
       db.prepare("UPDATE users SET role = 'admin'").run();
-      assert.equal((await request('/api/products', { method: 'POST', cookie, body: product })).status, 201);
+      const created = await request('/api/products', { method: 'POST', cookie, body: product });
+      assert.equal(created.status, 201);
+      assert.equal((await request('/api/orders', { method: 'POST', cookie, body: { items: [{ productId: created.data.id, quantity: 1 }], shipping, requestKey: 'persistent-order-0001' } })).status, 201);
     });
     await t.test('reopened instance', async child => {
       const { request } = await fixture(child, openDatabase(filename));
       assert.equal((await request('/api/auth/me', { cookie })).status, 200);
       assert.equal((await request('/api/products')).data.total, 1);
+      const saved = (await request('/api/orders', { cookie })).data.orders;
+      assert.equal(saved.length, 1);
+      assert.equal(saved[0].total_cents, 10000);
+      assert.equal((await request('/api/products')).data.products[0].stock, 3);
       assert.equal((await request('/api/auth/login', { method: 'POST', body: account })).status, 200);
     });
   } finally { rmSync(dir, { recursive: true, force: true }); }

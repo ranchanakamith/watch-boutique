@@ -1,11 +1,13 @@
 import { ref, watch } from 'vue';
 import type { Watch } from '../types/watch';
 
-const savedWishlist = localStorage.getItem('boutique_wishlist');
-const wishlist = ref<Watch[]>(savedWishlist ? JSON.parse(savedWishlist) : []);
+function readWishlist(): Watch[] {
+  try { const data = JSON.parse(localStorage.getItem('boutique_wishlist') || '[]'); return Array.isArray(data) ? data.filter(i => i && Number.isSafeInteger(i.id)) : []; } catch { return []; }
+}
+const wishlist = ref<Watch[]>(readWishlist());
 
 watch(wishlist, (newWishlist) => {
-  localStorage.setItem('boutique_wishlist', JSON.stringify(newWishlist));
+  try { localStorage.setItem('boutique_wishlist', JSON.stringify(newWishlist)); } catch { /* Keep the in-memory list usable. */ }
 }, { deep: true });
 
 export function useWishlist() {

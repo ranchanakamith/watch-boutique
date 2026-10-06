@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Watch } from '../types/watch';
+import { salePrice } from '../composables/useShopApi';
 import { useCart } from '../composables/useCart';
 import { useWishlist } from '../composables/useWishlist';
 
@@ -49,7 +50,7 @@ onUnmounted(() => {
 });
 
 const handleAddToCart = () => {
-  addToCart(props.watch);
+  if (!addToCart(props.watch)) return;
   isAddingToBag.value = true;
   setTimeout(() => {
     isAddingToBag.value = false;
@@ -61,7 +62,7 @@ const handleBuyNow = () => {
   isBuyingNow.value = true;
   setTimeout(() => {
     isBuyingNow.value = false;
-    alert(`Proceeding to Secure Checkout for ${props.watch.title}...`);
+    void router.push('/checkout');
   }, 600);
 };
 
@@ -101,7 +102,7 @@ const goToWatchInfo = () => {
     <div class="flex flex-col text-center">
       <span class="text-[9px] uppercase tracking-[0.3em] text-gray-400 dark:text-theme-muted mb-3">{{ watch.brand || 'Rolex' }}</span>
       <h3 class="font-serif text-lg text-gray-900 dark:text-white mb-2 font-light tracking-wide">{{ watch.title }}</h3>
-      <p class="text-theme-gold text-sm tracking-widest">${{ watch.price.toLocaleString() }}</p>
+      <p class="text-theme-gold text-sm tracking-widest">${{ salePrice(watch).toLocaleString() }}</p>
     </div>
 
     <!-- 
@@ -116,15 +117,15 @@ const goToWatchInfo = () => {
       ]"
     >
       
-      <button @click.stop="handleAddToCart" 
+      <button :disabled="watch.stock <= 0" @click.stop="handleAddToCart"
               :class="[
                 'flex-1 py-3 text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border rounded-full border active:scale-95',
                 isAddingToBag ? 'bg-theme-gold border-theme-gold text-white dark:text-theme-bg' : 'border-gray-900 rounded-full border dark:border-white text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white dark:hover:text-theme-bg'
               ]">
-        {{ isAddingToBag ? 'Added ✓' : 'Add to Bag' }}
+        {{ isAddingToBag ? 'Added ✓' : (watch.stock <= 0 ? 'Sold out' : 'Add to Bag') }}
       </button>
 
-      <button @click.stop="handleBuyNow" 
+      <button :disabled="watch.stock <= 0" @click.stop="handleBuyNow"
               :class="[
                 'flex-1 py-3 text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border rounded-full border  active:scale-95 bg-theme-gold border-theme-gold text-white dark:text-theme-bg hover:opacity-80',
                 isBuyingNow ? 'animate-pulse' : ''
