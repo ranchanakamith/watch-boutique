@@ -3,6 +3,8 @@ import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import { randomBytes } from 'node:crypto';
 import { registerCommerce } from './commerce.js';
+import { transaction } from './commerce.js';
+import { registerAccountRoutes } from './account.js';
 import { productFromRow, insertProduct } from './db.js';
 import { hashPassword, verifyPassword, digest, publicUser, readToken } from './auth.js';
 
@@ -79,9 +81,13 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
     const passwordHash = await hashPassword(password);
     // Check after hashing; the synchronous insert below cannot race another request in this process.
     if (db.prepare('SELECT id FROM users WHERE email = ?').get(normalized)) throw fail(409, 'An account with this email already exists.');
-    const result = db.prepare('INSERT INTO users (email, name, password_hash) VALUES (?, ?, ?)').run(normalized, name.trim(), passwordHash);
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(Number(result.lastInsertRowid));
-    startSession(req, res, user);
+    const user = transaction(db, () => {
+      const result = db.prepare('INSERT INTO users (email, name, password_hash) VALUES (?, ?, ?)').run(normalized, name.trim(), passwordHash);
+      const created = db.prepare('SELECT * FROM users WHERE id = ?').get(Number(result.lastInsertRowid));
+      db.prepare('INSERT INTO welcome_emails(user_id, message_key) VALUES (?, ?)').run(created.id, `welcome-${randomBytes(24).toString('hex')}`);
+      startSession(req, res, created);
+      return created;
+    });
     res.status(201).json({ user: publicUser(user) });
   });
   app.post('/api/auth/login', async (req, res) => {
@@ -141,6 +147,7 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
     res.status(204).end();
   });
   registerCommerce(app, db, requireUser, requireAdmin);
+  registerAccountRoutes(app, db, requireUser);
   app.use('/api', (req, res) => res.status(404).json({ message: 'API route not found.' }));
   app.use((err, req, res, next) => {
     if (err.errcode === 13 || /database or disk is full/i.test(err.message)) return res.status(507).json({ message: 'Local storage limit reached. Contact the administrator before adding more data.' });

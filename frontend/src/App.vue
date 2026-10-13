@@ -624,6 +624,7 @@ const isCustomerServicePage = computed(() => {
 
         <button
           v-if="isAuthenticated"
+          @click="isCartOpen = false; router.push('/checkout')"
           class="w-full bg-theme-gold text-white dark:text-theme-bg py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-theme-gold/80 transition-colors"
         >
           Secure Checkout

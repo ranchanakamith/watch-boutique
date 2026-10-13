@@ -21,10 +21,13 @@ async function request(path: string, body?: object) {
   if (!response.ok) throw new Error(data.message || 'Unable to complete your request.');
   return data;
 }
+import { activateCollections } from './useAccountCollections';
+
 function restoreSession() {
   initialized ??= (async () => {
     try { user.value = (await request('me')).user; }
     catch { user.value = null; }
+    activateCollections(user.value ? user.value.id : null);
   })();
   return initialized;
 }
@@ -34,6 +37,7 @@ async function authenticate(path: string, body: object) {
   try {
     await restoreSession();
     user.value = (await request(path, body)).user;
+    activateCollections(user.value.id);
     return true;
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Authentication failed.';
@@ -46,7 +50,7 @@ export function useAuth() {
   const logout = async () => {
     isLoading.value = true;
     error.value = null;
-    try { await restoreSession(); await request('logout', {}); user.value = null; }
+    try { await restoreSession(); await request('logout', {}); user.value = null; activateCollections(null); }
     catch (err) { error.value = err instanceof Error ? err.message : 'Unable to sign out. Please try again.'; }
     finally { isLoading.value = false; }
   };

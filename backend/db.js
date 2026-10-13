@@ -35,6 +35,20 @@ export function openDatabase(filename = process.env.DATABASE_PATH || DEFAULT_DAT
   const pageSize = db.prepare('PRAGMA page_size').get().page_size;
   db.exec(`PRAGMA max_page_count = ${Math.floor(DATABASE_LIMIT_BYTES / pageSize)}`);
   db.exec(`
+    CREATE TABLE IF NOT EXISTS account_items (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL CHECK(kind IN ('cart','wishlist')),
+      product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+      quantity INTEGER NOT NULL CHECK(quantity BETWEEN 1 AND 99),
+      PRIMARY KEY(user_id, kind, product_id)
+    );
+    CREATE TABLE IF NOT EXISTS welcome_emails (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      message_key TEXT NOT NULL UNIQUE,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','sent','failed')),
+      attempts INTEGER NOT NULL DEFAULT 0, next_attempt INTEGER NOT NULL DEFAULT 0,
+      first_attempt INTEGER, sent_at INTEGER, failure TEXT
+    );
     CREATE TABLE IF NOT EXISTS catalog_imports (
       source_key TEXT PRIMARY KEY, product_id INTEGER REFERENCES products(id) ON DELETE SET NULL
     );
