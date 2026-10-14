@@ -5,6 +5,8 @@ import { randomBytes } from 'node:crypto';
 import { registerCommerce } from './commerce.js';
 import { transaction } from './commerce.js';
 import { registerAccountRoutes } from './account.js';
+import { createAccountSecurity } from './account-security.js';
+import { createSecuritySender } from './mail.js';
 import { productFromRow, insertProduct } from './db.js';
 import { hashPassword, verifyPassword, digest, publicUser, readToken } from './auth.js';
 
@@ -28,8 +30,10 @@ function validateProduct(body) {
   return product;
 }
 
-export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http://localhost:5173', production = process.env.NODE_ENV === 'production' } = {}) {
+export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http://localhost:5173', production = process.env.NODE_ENV === 'production', security = {} } = {}) {
   const app = express();
+  const accountSecurity = createAccountSecurity(db, { origin, production, sender: createSecuritySender(), ...security });
+  app.locals.accountSecurity = accountSecurity;
   const dummyHash = await hashPassword(randomBytes(32).toString('hex'));
   const cookieOptions = { httpOnly: true, sameSite: 'strict', secure: production, path: '/api' };
   app.disable('x-powered-by');
@@ -49,19 +53,19 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
   app.use('/api/auth/register', authLimiter);
   app.use('/api/auth/login', authLimiter);
 
-  function startSession(req, res, user) {
+  function startSession(req, res, user, mfaVerified = false) {
     const old = readToken(req);
     if (old) db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(digest(old));
     const now = Date.now();
     db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(now);
     const token = randomBytes(32).toString('hex');
     const duration = 7 * 24 * 60 * 60 * 1000;
-    db.prepare('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)').run(digest(token), user.id, now + duration);
+    db.prepare('INSERT INTO sessions (token_hash, user_id, expires_at, created_at, mfa_verified) VALUES (?, ?, ?, ?, ?)').run(digest(token), user.id, now + duration, now, mfaVerified ? 1 : 0);
     res.cookie('boutique_session', token, { ...cookieOptions, maxAge: duration });
   }
   function requireUser(req, res, next) {
     const token = readToken(req);
-    const row = token && db.prepare(`SELECT users.* FROM users JOIN sessions ON users.id = sessions.user_id
+    const row = token && db.prepare(`SELECT users.*, sessions.mfa_verified AS session_mfa_verified FROM users JOIN sessions ON users.id = sessions.user_id
       WHERE sessions.token_hash = ? AND sessions.expires_at > ?`).get(digest(token), Date.now());
     if (!row) return next(fail(401, 'Please sign in.'));
     req.user = row;
@@ -69,6 +73,7 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
   }
   function requireAdmin(req, res, next) {
     if (req.user.role !== 'admin') return next(fail(403, 'Administrator access required.'));
+    if (production && (!req.user.email_verified_at || !req.user.mfa_secret || !req.user.session_mfa_verified)) return next(fail(403, 'Open Account security to verify your email and enable two-factor authentication before using administrator tools.'));
     next();
   }
   app.get('/api/health', (req, res) => { db.prepare('SELECT 1').get(); res.json({ status: 'ok' }); });
@@ -95,7 +100,9 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
     if (typeof email !== 'string' || email.length > 254 || typeof password !== 'string' || password.length > 128) throw fail(400, 'Email and password are required.');
     const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.trim().toLowerCase());
     const valid = await verifyPassword(password, user?.password_hash || dummyHash);
-    if (!user || !valid) throw fail(401, 'Invalid email or password.');
+    if (!user || !valid || db.prepare('SELECT password_hash FROM users WHERE id = ?').get(user.id)?.password_hash !== user.password_hash) throw fail(401, 'Invalid email or password.');
+    const currentUser = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+    if (currentUser.mfa_secret) return res.json(accountSecurity.beginMfa(currentUser));
     startSession(req, res, user);
     res.json({ user: publicUser(user) });
   });
@@ -105,6 +112,7 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
     if (token) db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(digest(token));
     res.clearCookie('boutique_session', cookieOptions).status(204).end();
   });
+  accountSecurity.routes(app, { requireUser, startSession, cookieOptions });
   app.get('/api/products', (req, res) => {
     const integer = (value, fallback, max) => {
       if (value === undefined) return fallback;

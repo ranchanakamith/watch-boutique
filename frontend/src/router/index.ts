@@ -20,6 +20,10 @@ const router = createRouter({
   },
 
   routes: [
+    { path: '/account/security', component: () => import('../views/AccountSecurityView.vue') },
+    { path: '/account/forgot-password', component: () => import('../views/AccountRecoveryView.vue') },
+    { path: '/account/reset-password', component: () => import('../views/AccountRecoveryView.vue') },
+    { path: '/account/verify-email', component: () => import('../views/AccountRecoveryView.vue') },
     { path: '/checkout', component: () => import('../views/CheckoutView.vue') },
     { path: '/orders', component: () => import('../views/OrdersView.vue') },
     { path: '/admin', component: () => import('../views/AdminView.vue') },

@@ -33,6 +33,8 @@ const {
   register,
   logout,
   restoreSession,
+  mfaChallenge,
+  completeMfa,
 } = useAuth();
 
 const isDarkMode = ref(false);
@@ -41,6 +43,7 @@ const isWishlistOpen = ref(false);
 
 const isLoginModalOpen = ref(false);
 const isRegisterMode = ref(false);
+const mfaCode = ref('');
 const authForm = ref({
   name: '',
   username: '',
@@ -66,6 +69,8 @@ const toggleTheme = () => {
 };
 
 const openAuthModal = (mode: 'login' | 'register') => {
+  mfaChallenge.value = null;
+  mfaCode.value = '';
   isRegisterMode.value = mode === 'register';
   authForm.value = {
     name: '',
@@ -80,7 +85,9 @@ const openAuthModal = (mode: 'login' | 'register') => {
 const handleAuthSubmit = async () => {
   let success = false;
 
-  if (isRegisterMode.value) {
+  if (mfaChallenge.value) {
+    success = await completeMfa(mfaCode.value);
+  } else if (isRegisterMode.value) {
     success = await register(
       authForm.value.username,
       authForm.value.password,
@@ -95,6 +102,10 @@ const handleAuthSubmit = async () => {
 
   if (success) {
     isLoginModalOpen.value = false;
+    mfaCode.value = '';
+    authForm.value.password = '';
+  } else if (mfaChallenge.value) {
+    authForm.value.password = '';
   }
 };
 
@@ -155,7 +166,7 @@ const isCustomerServicePage = computed(() => {
             class="w-4 h-4 rounded-full bg-gray-200"
             alt="User"
           />
-          Client Access
+          <RouterLink to="/account/security" aria-label="Account security">Client Access</RouterLink>
         </span>
 
         <div
@@ -295,13 +306,14 @@ const isCustomerServicePage = computed(() => {
           >
             Contact
           </RouterLink>
+          <RouterLink v-if="isAuthenticated" to="/account/security" class="text-gray-500 hover:text-theme-gold transition-colors pb-1 border-b border-transparent hover:border-theme-gold" active-class="text-theme-gold border-theme-gold">Account</RouterLink>
         </nav>
       </header>
 
       <RouterView v-slot="{ Component }">
         <component
           :is="Component"
-          :key="$route.fullPath + refreshKey"
+          :key="(/^\/account\/(reset-password|verify-email)$/.test($route.path) ? $route.path + JSON.stringify($route.query) : $route.fullPath) + refreshKey"
         />
       </RouterView>
     </main>
@@ -331,7 +343,7 @@ const isCustomerServicePage = computed(() => {
         <h3
           class="font-serif text-2xl font-light text-gray-900 dark:text-white mb-2"
         >
-          {{ isRegisterMode ? 'Create Account' : 'Client Portal' }}
+          {{ mfaChallenge ? 'Verify your sign-in' : isRegisterMode ? 'Create Account' : 'Client Portal' }}
         </h3>
 
         <p
@@ -357,7 +369,13 @@ const isCustomerServicePage = computed(() => {
             {{ authError }}
           </p>
 
-          <div v-if="isRegisterMode" class="flex flex-col gap-2">
+          <div v-if="mfaChallenge" class="flex flex-col gap-2">
+            <label for="signin-mfa" class="text-[10px] uppercase tracking-[0.2em] text-gray-600 dark:text-gray-400">Authenticator or recovery code</label>
+            <input id="signin-mfa" v-model="mfaCode" autocomplete="one-time-code" maxlength="100" required class="bg-transparent border-b border-gray-400/50 dark:border-white/20 focus:border-theme-gold outline-none py-2 text-sm font-light text-gray-900 dark:text-white" />
+            <p class="text-xs text-gray-600 dark:text-gray-400">Enter a fresh 6-digit authenticator code or one of your saved recovery codes.</p>
+          </div>
+
+          <div v-if="isRegisterMode && !mfaChallenge" class="flex flex-col gap-2">
             <label
               class="text-[10px] uppercase tracking-[0.2em] text-gray-600 dark:text-gray-400"
             >
@@ -373,7 +391,7 @@ const isCustomerServicePage = computed(() => {
             />
           </div>
 
-          <div class="flex flex-col gap-2">
+          <div v-if="!mfaChallenge" class="flex flex-col gap-2">
             <label
               class="text-[10px] uppercase tracking-[0.2em] text-gray-600 dark:text-gray-400"
             >
@@ -391,7 +409,7 @@ const isCustomerServicePage = computed(() => {
             />
           </div>
 
-          <div class="flex flex-col gap-2">
+          <div v-if="!mfaChallenge" class="flex flex-col gap-2">
             <label
               class="text-[10px] uppercase tracking-[0.2em] text-gray-600 dark:text-gray-400"
             >
@@ -425,13 +443,14 @@ const isCustomerServicePage = computed(() => {
               {{
                 isLoading
                   ? 'Processing...'
-                  : isRegisterMode
+                  : mfaChallenge ? 'Verify Sign In' : isRegisterMode
                     ? 'Complete Registration'
                     : 'Secure Sign In'
               }}
             </button>
 
             <button
+              v-if="!mfaChallenge"
               type="button"
               @click="isRegisterMode = !isRegisterMode"
               class="w-full bg-white/20 dark:bg-black/20 rounded-full border border-gray-900/20 dark:border-white/20 text-gray-900 dark:text-white py-4 text-xs uppercase tracking-[0.2em] font-medium hover:bg-white/40 dark:hover:bg-white/10 transition-colors backdrop-blur-md"
@@ -442,6 +461,8 @@ const isCustomerServicePage = computed(() => {
                   : 'Create an Account'
               }}
             </button>
+            <button v-if="mfaChallenge" type="button" @click="openAuthModal('login')" class="text-xs text-gray-600 dark:text-gray-400 hover:text-theme-gold">Back to Sign In</button>
+            <RouterLink v-if="!isRegisterMode && !mfaChallenge" to="/account/forgot-password" @click="isLoginModalOpen = false" class="text-center text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold">Forgot password?</RouterLink>
           </div>
         </form>
       </div>

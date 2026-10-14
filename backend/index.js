@@ -8,8 +8,8 @@ if (!db.prepare('SELECT 1 FROM products LIMIT 1').get() && !db.prepare('SELECT 1
 const app = await createApp(db);
 const sender = createWelcomeSender();
 const mailWorker = createWelcomeWorker(db, sender);
-if (!sender) console.warn('Welcome emails are queued locally. Set RESEND_API_KEY and MAIL_FROM to enable sending.');
-const processMail = () => mailWorker.run().catch(() => console.error('Welcome-email worker failed; check local database availability.'));
+if (!sender) console.warn('EMAIL DELIVERY DISABLED: configure RESEND_API_KEY and MAIL_FROM in backend/.env, then restart. Password recovery and verification cannot send mail. Run npm run mail:check for details.');
+const processMail = () => Promise.all([mailWorker.run(), app.locals.accountSecurity.deliverMail()]).catch(() => console.error('Email worker failed; check local database availability.'));
 const mailTimer = setInterval(processMail, 5000);
 mailTimer.unref();
 void processMail();

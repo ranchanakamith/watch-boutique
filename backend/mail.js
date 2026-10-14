@@ -1,6 +1,24 @@
+// Security messages are deliberately separate from welcome-email jobs.
+export function createSecuritySender(env = process.env, fetcher = fetch) {
+  if (!env.RESEND_API_KEY?.trim() || !env.MAIL_FROM?.trim()) return null;
+  return async ({ email, subject, text, message_key }) => {
+    const response = await fetcher('https://api.resend.com/emails', {
+      method: 'POST', signal: AbortSignal.timeout(15000),
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'Idempotency-Key': message_key },
+      body: JSON.stringify({ from: env.MAIL_FROM, to: [email], subject, text }),
+    });
+    if (!response.ok) {
+      // Do not expose provider response bodies: they can contain personal data.
+      const guidance = response.status === 401 ? 'Check RESEND_API_KEY.' : response.status === 403 ? 'Check sender-domain verification and recipient restrictions in Resend.' : response.status === 429 ? 'Provider rate limit reached; delivery will be retried.' : 'Check sender settings and provider delivery logs.';
+      throw new Error(`Email provider returned HTTP ${response.status}. ${guidance}`);
+    }
+    if (typeof (await response.json()).id !== 'string') throw new Error('Email provider did not confirm acceptance.');
+  };
+}
+
 // No browser credentials or passwords are included in welcome emails.
 export function createWelcomeSender(env = process.env, fetcher = fetch) {
-  if (!env.RESEND_API_KEY || !env.MAIL_FROM) return null;
+  if (!env.RESEND_API_KEY?.trim() || !env.MAIL_FROM?.trim()) return null;
   return async ({ email, name, message_key }) => {
     const response = await fetcher('https://api.resend.com/emails', {
       method: 'POST', signal: AbortSignal.timeout(15000),

@@ -1,3 +1,4 @@
+import './config.js';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -6,8 +7,12 @@ import { fileURLToPath } from 'node:url';
 // 80 MB main file + bounded rollback journal leaves ample headroom under 200 MB.
 export const DATABASE_LIMIT_BYTES = 80_000_000;
 export const DEFAULT_DATABASE_PATH = fileURLToPath(new URL('./data/boutique.sqlite', import.meta.url));
+export function configuredDatabasePath() {
+  const configured = process.env.DATABASE_PATH;
+  return configured === ':memory:' ? configured : configured ? resolve(fileURLToPath(new URL('.', import.meta.url)), configured) : DEFAULT_DATABASE_PATH;
+}
 
-export function openDatabase(filename = process.env.DATABASE_PATH || DEFAULT_DATABASE_PATH) {
+export function openDatabase(filename = configuredDatabasePath()) {
   if (filename !== ':memory:') mkdirSync(dirname(resolve(filename)), { recursive: true });
   const db = new DatabaseSync(filename);
   db.exec(`
@@ -69,6 +74,38 @@ export function openDatabase(filename = process.env.DATABASE_PATH || DEFAULT_DAT
       title TEXT NOT NULL, unit_cents INTEGER NOT NULL, quantity INTEGER NOT NULL CHECK(quantity > 0)
     );
     CREATE INDEX IF NOT EXISTS order_items_order ON order_items(order_id);
+  `);
+  // Additive account-security migration: preserve existing accounts and sessions.
+  const userColumns = new Set(db.prepare('PRAGMA table_info(users)').all().map(column => column.name));
+  for (const [name, definition] of Object.entries({
+    email_verified_at: 'INTEGER', mfa_secret: 'TEXT', mfa_pending: 'TEXT',
+    mfa_pending_until: 'INTEGER', mfa_last_step: 'INTEGER NOT NULL DEFAULT -1',
+  })) if (!userColumns.has(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${definition}`);
+  const sessionColumns = new Set(db.prepare('PRAGMA table_info(sessions)').all().map(column => column.name));
+  if (!sessionColumns.has('created_at')) db.exec('ALTER TABLE sessions ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0');
+  if (!sessionColumns.has('mfa_verified')) db.exec('ALTER TABLE sessions ADD COLUMN mfa_verified INTEGER NOT NULL DEFAULT 0');
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS security_tokens (
+      token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL CHECK(kind IN ('reset','verify')), expires_at INTEGER NOT NULL,
+      UNIQUE(user_id, kind)
+    );
+    CREATE TABLE IF NOT EXISTS security_mail (
+      id TEXT PRIMARY KEY, token_hash TEXT NOT NULL REFERENCES security_tokens(token_hash) ON DELETE CASCADE,
+      payload TEXT, attempts INTEGER NOT NULL DEFAULT 0, next_attempt INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','sent','failed'))
+    );
+    CREATE TABLE IF NOT EXISTS mfa_challenges (
+      token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      expires_at INTEGER NOT NULL, attempts INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS recovery_codes (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      code_hash TEXT NOT NULL, PRIMARY KEY(user_id, code_hash)
+    );
+    CREATE TABLE IF NOT EXISTS security_limits (
+      key TEXT PRIMARY KEY, count INTEGER NOT NULL, expires_at INTEGER NOT NULL
+    );
   `);
   return db;
 }

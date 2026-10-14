@@ -14,7 +14,7 @@ export async function verifyPassword(password, encoded) {
 }
 export const digest = value => createHash('sha256').update(value).digest('hex');
 export const publicUser = row => ({ id: row.id, email: row.email, username: row.email, name: row.name, role: row.role,
-  image: '/avatar.svg' });
+  image: '/avatar.svg', emailVerified: !!row.email_verified_at, mfaEnabled: !!row.mfa_secret });
 export function readToken(req) {
   return (req.headers.cookie || '').split(';').map(part => part.trim()).find(part => part.startsWith('boutique_session='))?.slice('boutique_session='.length);
 }
