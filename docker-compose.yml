@@ -1,0 +1,24 @@
+services:
+  watch-boutique:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: watch-boutique-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=3000
+      - APP_ORIGIN=http://localhost:3000
+      # Configure email if desired:
+      # - RESEND_API_KEY=your-api-key
+      # - MAIL_FROM=Watch Boutique <store@your-domain.com>
+    volumes:
+      # Persistent volume to store SQLite database across restarts
+      - boutique_db_data:/app/backend/data
+
+volumes:
+  boutique_db_data:
+    driver: local

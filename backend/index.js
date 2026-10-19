@@ -13,8 +13,8 @@ const processMail = () => Promise.all([mailWorker.run(), app.locals.accountSecur
 const mailTimer = setInterval(processMail, 5000);
 mailTimer.unref();
 void processMail();
-const port = Number(process.env.PORT || 3000);
-const server = app.listen(port, process.env.HOST || '127.0.0.1', () => console.log(`Boutique API listening on port ${port}`));
+const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
+const server = app.listen(port, host, () => console.log(`Boutique API listening on ${host}:${port}`));
 function shutdown() { clearInterval(mailTimer); server.close(async () => { await processMail(); db.close(); process.exit(0); }); }
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);

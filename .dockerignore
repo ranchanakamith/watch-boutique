@@ -1,0 +1,13 @@
+node_modules
+.git
+.gitignore
+.vscode
+.vite
+dist
+frontend/dist
+backend/data/*.sqlite-journal
+backend/data/*.sqlite-wal
+backend/data/*.sqlite-shm
+*.log
+.DS_Store
+Thumbs.db

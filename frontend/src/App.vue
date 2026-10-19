@@ -307,6 +307,7 @@ const isCustomerServicePage = computed(() => {
             Contact
           </RouterLink>
           <RouterLink v-if="isAuthenticated" to="/account/security" class="text-gray-500 hover:text-theme-gold transition-colors pb-1 border-b border-transparent hover:border-theme-gold" active-class="text-theme-gold border-theme-gold">Account</RouterLink>
+          <RouterLink v-if="user?.role === 'admin'" to="/admin" class="text-theme-gold hover:text-yellow-400 font-semibold transition-colors pb-1 border-b border-transparent hover:border-theme-gold" active-class="text-theme-gold border-theme-gold">Admin Dashboard</RouterLink>
         </nav>
       </header>
 

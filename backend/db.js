@@ -19,6 +19,9 @@ export function openDatabase(filename = configuredDatabasePath()) {
     PRAGMA foreign_keys = ON;
     PRAGMA journal_mode = DELETE;
     PRAGMA busy_timeout = 5000;
+    PRAGMA synchronous = NORMAL;
+    PRAGMA cache_size = -4000;
+    PRAGMA temp_store = MEMORY;
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY, email TEXT NOT NULL UNIQUE COLLATE NOCASE,
       name TEXT NOT NULL, password_hash TEXT NOT NULL,
@@ -36,6 +39,8 @@ export function openDatabase(filename = configuredDatabasePath()) {
       rating REAL NOT NULL DEFAULT 0, stock INTEGER NOT NULL CHECK(stock >= 0),
       brand TEXT NOT NULL, category TEXT NOT NULL, thumbnail TEXT NOT NULL, images TEXT NOT NULL
     );
+    CREATE INDEX IF NOT EXISTS products_category ON products(category);
+    CREATE INDEX IF NOT EXISTS products_brand ON products(brand);
   `);
   const pageSize = db.prepare('PRAGMA page_size').get().page_size;
   db.exec(`PRAGMA max_page_count = ${Math.floor(DATABASE_LIMIT_BYTES / pageSize)}`);
@@ -68,6 +73,8 @@ export function openDatabase(filename = configuredDatabasePath()) {
       UNIQUE(user_id, request_key)
     );
     CREATE INDEX IF NOT EXISTS orders_user ON orders(user_id, id);
+    CREATE INDEX IF NOT EXISTS orders_status ON orders(status);
+    CREATE INDEX IF NOT EXISTS orders_created_at ON orders(created_at);
     CREATE TABLE IF NOT EXISTS order_items (
       id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id),
       product_id INTEGER REFERENCES products(id) ON DELETE SET NULL,

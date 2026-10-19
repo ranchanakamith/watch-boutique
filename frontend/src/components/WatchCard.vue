@@ -21,6 +21,7 @@ const isWatchInWishlist = computed(() => {
 const isAddingToBag = ref(false);
 const isBuyingNow = ref(false);
 const heartAnim = ref(false);
+const isImageLoaded = ref(false);
 
 // Scroll-reveal state for MOBILE only
 const cardRef = ref<HTMLElement | null>(null);
@@ -28,7 +29,8 @@ const isInCenter = ref(false);
 let observer: IntersectionObserver | null = null;
 
 onMounted(() => {
-  if (cardRef.value) {
+  // Only initialize IntersectionObserver on mobile viewports (< 768px)
+  if (cardRef.value && typeof window !== 'undefined' && window.innerWidth < 768) {
     observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -46,7 +48,10 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (observer) observer.disconnect();
+  if (observer) {
+    observer.disconnect();
+    observer = null;
+  }
 });
 
 const handleAddToCart = () => {
@@ -96,7 +101,17 @@ const goToWatchInfo = () => {
         </svg>
       </button>
 
-      <img :src="watch.thumbnail" :alt="watch.title" class="w-full h-full object-contain transform group-hover:scale-105 transition-transform duration-700 ease-out" />
+      <img 
+        :src="watch.thumbnail" 
+        :alt="watch.title" 
+        loading="lazy"
+        decoding="async"
+        @load="isImageLoaded = true"
+        :class="[
+          'w-full h-full object-contain transform group-hover:scale-105 transition-all duration-700 ease-out',
+          isImageLoaded ? 'opacity-100' : 'opacity-0'
+        ]" 
+      />
     </div>
 
     <div class="flex flex-col text-center">

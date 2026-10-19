@@ -1,15 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import AboutView from '../views/AboutView.vue'
-import ContactView from '../views/ContactView.vue'
-import WatchView from '../views/WatchView.vue'
-
-// Import the new views
-
-import ShippingView from '../views/ShippingView.vue'
-import ReturnsView from '../views/ReturnsView.vue'
-import WarrantyView from '../views/WarrantyView.vue'
-import FaqView from '../views/FaqView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,17 +25,17 @@ const router = createRouter({
     {
       path: '/about',
       name: 'about',
-      component: AboutView
+      component: () => import('../views/AboutView.vue')
     },
     {
       path: '/contact',
       name: 'contact',
-      component: ContactView
+      component: () => import('../views/ContactView.vue')
     },
     {
       path: '/watch/:id',
       name: 'watch',
-      component: WatchView,
+      component: () => import('../views/WatchView.vue'),
       props: true
     },
     // Add the new routes here
@@ -57,22 +47,22 @@ const router = createRouter({
     {
       path: '/shipping',
       name: 'shipping',
-      component: ShippingView
+      component: () => import('../views/ShippingView.vue')
     },
     {
       path: '/returns',
       name: 'returns',
-      component: ReturnsView
+      component: () => import('../views/ReturnsView.vue')
     },
     {
       path: '/warranty',
       name: 'warranty',
-      component: WarrantyView
+      component: () => import('../views/WarrantyView.vue')
     },
     {
       path: '/faq',
       name: 'faq',
-      component: FaqView
+      component: () => import('../views/FaqView.vue')
     }
   ]
 })

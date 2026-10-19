@@ -2,6 +2,9 @@ import express from 'express';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import { randomBytes } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { registerCommerce } from './commerce.js';
 import { transaction } from './commerce.js';
 import { registerAccountRoutes } from './account.js';
@@ -37,7 +40,18 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
   const dummyHash = await hashPassword(randomBytes(32).toString('hex'));
   const cookieOptions = { httpOnly: true, sameSite: 'strict', secure: production, path: '/api' };
   app.disable('x-powered-by');
-  app.use(helmet());
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "https:", "http:"],
+        connectSrc: ["'self'"],
+      },
+    },
+  }));
   app.use('/api', (req, res, next) => {
     res.set('Cache-Control', 'no-store');
     // Browser mutations must originate from this application. Non-browser clients may omit Origin.
@@ -113,6 +127,10 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
     res.clearCookie('boutique_session', cookieOptions).status(204).end();
   });
   accountSecurity.routes(app, { requireUser, startSession, cookieOptions });
+  const catalogCache = new Map();
+  const invalidateCatalogCache = () => catalogCache.clear();
+  app.locals.invalidateCatalogCache = invalidateCatalogCache;
+
   app.get('/api/products', (req, res) => {
     const integer = (value, fallback, max) => {
       if (value === undefined) return fallback;
@@ -124,11 +142,20 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
     if (limit < 1) throw fail(400, 'Limit must be at least 1.');
     const { q = '', category = '' } = req.query;
     if (typeof q !== 'string' || typeof category !== 'string' || q.length > 200 || category.length > 1000) throw fail(400, 'Invalid product filter.');
+
+    const cacheKey = `${limit}:${skip}:${q.toLowerCase()}:${category}`;
+    const cached = catalogCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < 30_000)) {
+      return res.json(cached.data);
+    }
+
     const where = `WHERE (instr(lower(title || ' ' || brand || ' ' || description), lower(?)) > 0) AND (? = '' OR category = ?)`;
     const params = [q, category, category];
     const { total } = db.prepare(`SELECT count(*) AS total FROM products ${where}`).get(...params);
     const products = db.prepare(`SELECT * FROM products ${where} ORDER BY price DESC, id ASC LIMIT ? OFFSET ?`).all(...params, limit, skip).map(productFromRow);
-    res.json({ products, total, skip, limit });
+    const result = { products, total, skip, limit };
+    catalogCache.set(cacheKey, { data: result, timestamp: Date.now() });
+    res.json(result);
   });
   app.param('id', (req, res, next, value) => {
     if (!/^[1-9]\d*$/.test(value) || !Number.isSafeInteger(Number(value))) return next(fail(400, 'Invalid product ID.'));
@@ -140,23 +167,37 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
     return product;
   };
   app.get('/api/products/:id', (req, res) => res.json(findProduct(req.productId)));
-  app.post('/api/products', requireUser, requireAdmin, (req, res) => res.status(201).json(insertProduct(db, validateProduct(req.body))));
+  app.post('/api/products', requireUser, requireAdmin, (req, res) => {
+    invalidateCatalogCache();
+    res.status(201).json(insertProduct(db, validateProduct(req.body)));
+  });
   app.patch('/api/products/:id', requireUser, requireAdmin, (req, res) => {
     const { id, ...existing } = findProduct(req.productId);
     if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) || !Object.keys(req.body).length) throw fail(400, 'Provide product fields to update.');
     const product = validateProduct({ ...existing, ...req.body });
     db.prepare(`UPDATE products SET ${productFields.map(key => `${key} = ?`).join(',')} WHERE id = ?`)
       .run(...productFields.map(key => key === 'images' ? JSON.stringify(product[key]) : product[key]), id);
+    invalidateCatalogCache();
     res.json(findProduct(id));
   });
   app.delete('/api/products/:id', requireUser, requireAdmin, (req, res) => {
     findProduct(req.productId);
     db.prepare('DELETE FROM products WHERE id = ?').run(req.productId);
+    invalidateCatalogCache();
     res.status(204).end();
   });
   registerCommerce(app, db, requireUser, requireAdmin);
   registerAccountRoutes(app, db, requireUser);
   app.use('/api', (req, res) => res.status(404).json({ message: 'API route not found.' }));
+
+  const clientDist = resolve(fileURLToPath(new URL('../frontend/dist', import.meta.url)));
+  if (existsSync(clientDist)) {
+    app.use(express.static(clientDist));
+    app.get('*', (req, res) => {
+      res.sendFile(resolve(clientDist, 'index.html'));
+    });
+  }
+
   app.use((err, req, res, next) => {
     if (err.errcode === 13 || /database or disk is full/i.test(err.message)) return res.status(507).json({ message: 'Local storage limit reached. Contact the administrator before adding more data.' });
     const status = err.status >= 400 && err.status < 500 ? err.status : 500;

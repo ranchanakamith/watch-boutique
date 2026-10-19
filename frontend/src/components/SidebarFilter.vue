@@ -20,7 +20,18 @@ const emit = defineEmits<{
 const isOpen = ref(false);
 const router = useRouter();
 
-const handleSearchSubmit = () => {
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+const handleSearchInput = (e: Event) => {
+  const val = (e.target as HTMLInputElement).value;
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    emit('update:searchQuery', val);
+  }, 120);
+};
+
+const handleSearchSubmit = (e: Event) => {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  emit('update:searchQuery', (e.target as HTMLInputElement).value);
   router.push('/');      
   isOpen.value = false;  
 };
@@ -54,7 +65,7 @@ const triggerPortal = () => {
           <span class="block text-gray-600 dark:text-theme-muted text-xs uppercase tracking-widest font-light mb-2">Search</span>
           <input 
             :value="searchQuery"
-            @input="emit('update:searchQuery', ($event.target as HTMLInputElement).value)"
+            @input="handleSearchInput"
             @keyup.enter="handleSearchSubmit" 
             type="text" 
             class="w-full bg-transparent border-b border-gray-300 dark:border-white/20 focus:border-theme-gold outline-none py-2 text-sm font-light transition-colors text-gray-900 dark:text-white"

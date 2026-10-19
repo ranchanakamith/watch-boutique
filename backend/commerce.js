@@ -59,6 +59,7 @@ export function registerCommerce(app, db, requireUser, requireAdmin) {
         db.prepare('UPDATE products SET stock = stock - ? WHERE id = ?').run(line.quantity, line.productId);
         db.prepare('INSERT INTO order_items (order_id, product_id, title, unit_cents, quantity) VALUES (?, ?, ?, ?, ?)').run(id, line.productId, line.title, line.cents, line.quantity);
       }
+      app.locals.invalidateCatalogCache?.();
       return { order: getOrder(id), repeated: false };
     });
     res.status(result.repeated ? 200 : 201).json(result.order);
@@ -85,6 +86,7 @@ export function registerCommerce(app, db, requireUser, requireAdmin) {
       if (current.user_id !== req.user.id) throw fail(404, 'Order not found.');
       cancel(current); return getOrder(current.id);
     });
+    app.locals.invalidateCatalogCache?.();
     res.json(order);
   });
   app.get('/api/admin/summary', requireUser, requireAdmin, (req, res) => {
