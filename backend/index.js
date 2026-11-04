@@ -14,6 +14,8 @@ const mailTimer = setInterval(processMail, 5000);
 mailTimer.unref();
 void processMail();
 const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
+const port = Number(process.env.PORT || 3000);
+if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT must be an integer between 1 and 65535.');
 const server = app.listen(port, host, () => console.log(`Boutique API listening on ${host}:${port}`));
 function shutdown() { clearInterval(mailTimer); server.close(async () => { await processMail(); db.close(); process.exit(0); }); }
 process.on('SIGINT', shutdown);

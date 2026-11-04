@@ -88,6 +88,7 @@ const goToWatchInfo = () => {
   <div ref="cardRef" @click="goToWatchInfo" class="flex flex-col group cursor-pointer">
     <div class="relative bg-gray-50 dark:bg-theme-card p-8 mb-6 overflow-hidden flex items-center justify-center h-[350px] transition-colors duration-700">
       
+      <!-- Wishlist button -->
       <button @click.stop="handleToggleWishlist" class="absolute top-4 right-4 z-10 text-gray-400 hover:text-theme-gold transition-colors">
         <svg v-if="isWatchInWishlist" 
              :class="['w-5 h-5 text-theme-gold transition-transform duration-300 ease-out', heartAnim ? 'scale-150' : 'scale-100']" 
@@ -100,6 +101,16 @@ const goToWatchInfo = () => {
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
         </svg>
       </button>
+
+      <!-- Badges: Offers / Sold Out -->
+      <div class="absolute top-4 left-4 z-10 flex flex-col gap-1.5 items-start">
+        <span v-if="watch.stock <= 0" class="bg-red-600/90 text-white text-[9px] uppercase tracking-widest font-semibold px-2.5 py-0.5 rounded-full shadow-sm">
+          Sold out
+        </span>
+        <span v-else-if="watch.discountPercentage > 0" class="bg-gradient-to-r from-amber-600 to-amber-700 text-white text-[9px] uppercase tracking-widest font-bold px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">
+          <span>🏷️ {{ Math.round(watch.discountPercentage) }}% OFF</span>
+        </span>
+      </div>
 
       <img 
         :src="watch.thumbnail" 
@@ -117,7 +128,14 @@ const goToWatchInfo = () => {
     <div class="flex flex-col text-center">
       <span class="text-[9px] uppercase tracking-[0.3em] text-gray-400 dark:text-theme-muted mb-3">{{ watch.brand || 'Rolex' }}</span>
       <h3 class="font-serif text-lg text-gray-900 dark:text-white mb-2 font-light tracking-wide">{{ watch.title }}</h3>
-      <p class="text-theme-gold text-sm tracking-widest">${{ salePrice(watch).toLocaleString() }}</p>
+      <div class="flex items-center justify-center gap-2">
+        <span v-if="watch.discountPercentage > 0" class="text-xs text-gray-400 dark:text-gray-500 line-through tracking-wider">
+          ${{ Math.round(watch.price).toLocaleString() }}
+        </span>
+        <p class="text-theme-gold text-sm tracking-widest font-medium">
+          ${{ salePrice(watch).toLocaleString() }}
+        </p>
+      </div>
     </div>
 
     <!-- 

@@ -10,6 +10,7 @@ const router = createRouter({
   },
 
   routes: [
+    { path: '/:pathMatch(.*)*', component: () => import('../views/NotFoundView.vue') },
     { path: '/account/security', component: () => import('../views/AccountSecurityView.vue') },
     { path: '/account/forgot-password', component: () => import('../views/AccountRecoveryView.vue') },
     { path: '/account/reset-password', component: () => import('../views/AccountRecoveryView.vue') },

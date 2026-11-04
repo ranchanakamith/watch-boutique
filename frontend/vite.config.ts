@@ -30,8 +30,8 @@ export default defineConfig({
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-core': ['vue', 'vue-router', 'pinia'],
+        manualChunks(id) {
+          if (/[\\/]node_modules[\\/](?:@vue|vue|vue-router|pinia)[\\/]/.test(id)) return 'vendor-core'
         },
       },
     },

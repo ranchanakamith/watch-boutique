@@ -45,7 +45,11 @@ Stop the backend before copying the database for backup. Protect backups because
 
 ## Scope and remaining integrations
 
-Checkout currently uses USD, cash on delivery, free shipping and no additional calculated tax. Configure real currency, shipping and tax requirements before commercial use. Card payments, refunds, carrier integration, email notifications, password reset/email verification, image uploads, customer reviews and legal-policy pages are not implemented. Existing contact/policy content also needs review before launch. This is a local e-commerce foundation, not a fully deployed production service.
+Checkout currently uses USD, cash on delivery, free shipping and no additional calculated tax. Configure real currency, shipping and tax requirements before commercial use. Card payments, refunds, carrier integration, order-status email notifications, image uploads, customer reviews and dedicated privacy/terms pages still need implementation. Existing policy content also needs review before launch. This is a local e-commerce foundation, not a fully deployed production service.
+
+Password recovery, email verification and welcome emails are implemented; see backend/ACCOUNT-SECURITY.md. Contact inquiries use the configured Resend sender and require CONTACT_INBOX in addition to RESEND_API_KEY and MAIL_FROM. Without configuration, the form reports unavailable and offers direct contact. Provider acceptance is not a guarantee of inbox delivery. Track Order requires sign-in and uses the existing account-protected order endpoint. Tracking references are manually updated, not live courier locations. Signed-in bag/wishlist collections also persist in SQLite.
+
+Before launch, the owner must supply real products/images/specifications and stock, currency and delivery prices/coverage, approved warranty/returns/privacy/terms content, verified business contact details, email sender credentials and inbox, payment-provider credentials if online payments are wanted, and hosting/domain access. Configure HTTPS, APP_ORIGIN and ACCOUNT_SECURITY_KEY; securely back up the database and its existing security key. Do not convert USD catalog amounts to another currency by merely changing the currency label. The shipping/returns/FAQ claims are sample content and require owner approval before accepting real orders.
 
 ## Checks
 

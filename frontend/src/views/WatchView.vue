@@ -135,7 +135,21 @@ onMounted(() => {
         <div class="flex flex-col justify-center">
           <span class="text-[10px] uppercase tracking-[0.4em] text-gray-400 dark:text-theme-muted mb-4">{{ watch.brand || 'Premium Collection' }}</span>
           <h2 class="font-serif text-3xl md:text-5xl text-gray-900 dark:text-white mb-6 font-light tracking-wide leading-tight">{{ watch.title }}</h2>
-          <p class="text-theme-gold text-xl tracking-widest mb-10">${{ salePrice(watch).toLocaleString() }}</p>
+          <div class="flex items-baseline gap-3 mb-10 flex-wrap">
+            <p class="text-theme-gold text-2xl md:text-3xl tracking-widest font-medium">${{ salePrice(watch).toLocaleString() }}</p>
+            <span v-if="watch.discountPercentage > 0" class="text-base text-gray-400 dark:text-gray-500 line-through tracking-wider">
+              ${{ Math.round(watch.price).toLocaleString() }}
+            </span>
+            <span v-if="watch.discountPercentage > 0" class="bg-gradient-to-r from-amber-600 to-amber-700 text-white text-[10px] uppercase tracking-widest font-semibold px-3 py-1 rounded-full shadow-sm">
+              Save {{ Math.round(watch.discountPercentage) }}% (${{ (Math.round(watch.price) - salePrice(watch)).toLocaleString() }} OFF)
+            </span>
+            <span v-if="watch.stock > 0 && watch.stock <= 5" class="bg-red-500/20 text-red-500 border border-red-500/30 text-[10px] uppercase tracking-widest font-semibold px-2.5 py-1 rounded-full">
+              Only {{ watch.stock }} left in stock
+            </span>
+            <span v-else-if="watch.stock <= 0" class="bg-red-600/90 text-white text-[10px] uppercase tracking-widest font-semibold px-2.5 py-1 rounded-full">
+              Sold Out
+            </span>
+          </div>
           
           <div class="h-[1px] w-full bg-gray-200 dark:bg-white/10 mb-10"></div>
           
