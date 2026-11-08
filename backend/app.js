@@ -103,7 +103,26 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
     if (production && (!req.user.email_verified_at || !req.user.mfa_secret || !req.user.session_mfa_verified)) return next(fail(403, 'Open Account security to verify your email and enable two-factor authentication before using administrator tools.'));
     next();
   }
-  app.get('/api/health', (req, res) => { db.prepare('SELECT 1').get(); res.json({ status: 'ok' }); });
+  app.get('/api/health', (req, res) => {
+    try {
+      db.prepare('SELECT 1').get();
+      const mem = process.memoryUsage();
+      res.json({
+        status: 'ok',
+        service: 'Watch Boutique API',
+        timestamp: new Date().toISOString(),
+        uptimeSeconds: Math.floor(process.uptime()),
+        database: 'connected',
+        environment: production ? 'production' : 'development',
+        memoryMb: {
+          rss: Math.round(mem.rss / 1024 / 1024),
+          heapUsed: Math.round(mem.heapUsed / 1024 / 1024)
+        }
+      });
+    } catch {
+      res.status(503).json({ status: 'unhealthy', database: 'disconnected' });
+    }
+  });
   app.post('/api/auth/register', async (req, res) => {
     const { email, password, name } = req.body || {};
     if (typeof email !== 'string' || email.length > 254 || !emailPattern.test(email.trim())) throw fail(400, 'Enter a valid email address.');
