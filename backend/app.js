@@ -33,7 +33,7 @@ function validateProduct(body) {
   return product;
 }
 
-export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http://localhost:5173', production = process.env.NODE_ENV === 'production', security = {} } = {}) {
+export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http://localhost:5173', production = process.env.NODE_ENV === 'production', security = {}, contactSender = createSecuritySender(), contactInbox = process.env.CONTACT_INBOX } = {}) {
   const app = express();
   const accountSecurity = createAccountSecurity(db, { origin, production, sender: createSecuritySender(), ...security });
   app.locals.accountSecurity = accountSecurity;
@@ -62,6 +62,17 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
     next();
   });
   app.use(express.json({ limit: '64kb' }));
+  app.post('/api/contact', rateLimit({ windowMs: 15 * 60 * 1000, limit: 5, standardHeaders: 'draft-8', legacyHeaders: false }), async (req, res) => {
+    const { name, email, message } = req.body || {};
+    if (typeof name !== 'string' || !name.trim() || name.length > 100 ||
+        typeof email !== 'string' || email.length > 254 || !emailPattern.test(email.trim()) ||
+        typeof message !== 'string' || !message.trim() || message.length > 5000) throw fail(400, 'Enter your name, valid email and a message of up to 5,000 characters.');
+    if (!contactSender || !contactInbox || !emailPattern.test(contactInbox)) return res.status(503).json({ message: 'Online inquiries are currently unavailable. Please use the email or phone details on this page.' });
+    try {
+      await contactSender({ email: contactInbox, subject: 'Watch Boutique customer inquiry', text: `Name: ${name.trim()}\nCustomer email: ${email.trim()}\n\n${message.trim()}`, message_key: `contact-${randomBytes(24).toString('hex')}` });
+    } catch { return res.status(502).json({ message: 'Your inquiry could not be confirmed. Please contact us directly by email or phone.' }); }
+    res.status(200).json({ message: 'Your inquiry was sent. Our team will reply to the email address you provided.' });
+  });
   const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: 'draft-8', legacyHeaders: false,
     message: { message: 'Too many authentication attempts. Try again later.' } });
   app.use('/api/auth/register', authLimiter);
@@ -193,7 +204,7 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
   const clientDist = resolve(fileURLToPath(new URL('../frontend/dist', import.meta.url)));
   if (existsSync(clientDist)) {
     app.use(express.static(clientDist));
-    app.get('*', (req, res) => {
+    app.get('/{*path}', (req, res) => {
       res.sendFile(resolve(clientDist, 'index.html'));
     });
   }

@@ -96,7 +96,7 @@ onMounted(() => {
   <div class="w-full pb-24">
     
     <Teleport to="body">
-      <button @click="goBack" class="fixed top-6 left-2 md:top-12 md:left-19 z-[100] flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors group backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border border-gray-200/50 dark:border-white/10 shadow-sm active:scale-[0.98]">
+      <button @click="goBack" class="fixed top-3 left-2.5 sm:top-6 sm:left-4 md:top-12 md:left-19 z-[100] flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors group backdrop-blur-md bg-[#F8F9FA]/85 dark:bg-theme-bg/85 px-3.5 sm:px-6 py-2 sm:py-3 rounded-full border border-gray-200/50 dark:border-white/10 shadow-sm active:scale-[0.98]">
         <span class="transform group-hover:-translate-x-1 transition-transform duration-300">&larr;</span> 
         Back
       </button>
@@ -135,7 +135,21 @@ onMounted(() => {
         <div class="flex flex-col justify-center">
           <span class="text-[10px] uppercase tracking-[0.4em] text-gray-400 dark:text-theme-muted mb-4">{{ watch.brand || 'Premium Collection' }}</span>
           <h2 class="font-serif text-3xl md:text-5xl text-gray-900 dark:text-white mb-6 font-light tracking-wide leading-tight">{{ watch.title }}</h2>
-          <p class="text-theme-gold text-xl tracking-widest mb-10">${{ salePrice(watch).toLocaleString() }}</p>
+          <div class="flex items-baseline gap-3 mb-10 flex-wrap">
+            <p class="text-theme-gold text-2xl md:text-3xl tracking-widest font-medium">${{ salePrice(watch).toLocaleString() }}</p>
+            <span v-if="watch.discountPercentage > 0" class="text-base text-gray-400 dark:text-gray-500 line-through tracking-wider">
+              ${{ Math.round(watch.price).toLocaleString() }}
+            </span>
+            <span v-if="watch.discountPercentage > 0" class="bg-gradient-to-r from-amber-600 to-amber-700 text-white text-[10px] uppercase tracking-widest font-semibold px-3 py-1 rounded-full shadow-sm">
+              Save {{ Math.round(watch.discountPercentage) }}% (${{ (Math.round(watch.price) - salePrice(watch)).toLocaleString() }} OFF)
+            </span>
+            <span v-if="watch.stock > 0 && watch.stock <= 5" class="bg-red-500/20 text-red-500 border border-red-500/30 text-[10px] uppercase tracking-widest font-semibold px-2.5 py-1 rounded-full">
+              Only {{ watch.stock }} left in stock
+            </span>
+            <span v-else-if="watch.stock <= 0" class="bg-red-600/90 text-white text-[10px] uppercase tracking-widest font-semibold px-2.5 py-1 rounded-full">
+              Sold Out
+            </span>
+          </div>
           
           <div class="h-[1px] w-full bg-gray-200 dark:bg-white/10 mb-10"></div>
           

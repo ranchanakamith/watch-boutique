@@ -5,6 +5,11 @@ import { createWelcomeSender, createWelcomeWorker } from './mail.js';
 
 const db = openDatabase();
 if (!db.prepare('SELECT 1 FROM products LIMIT 1').get() && !db.prepare('SELECT 1 FROM catalog_imports LIMIT 1').get()) seedCatalog(db);
+const initialAdmin = process.env.INITIAL_ADMIN_EMAIL?.trim().toLowerCase();
+if (initialAdmin) {
+  const res = db.prepare("UPDATE users SET role = 'admin' WHERE email = ?").run(initialAdmin);
+  if (res.changes) console.log(`Auto-granted administrator role to ${initialAdmin}`);
+}
 const app = await createApp(db);
 const sender = createWelcomeSender();
 const mailWorker = createWelcomeWorker(db, sender);
@@ -14,6 +19,8 @@ const mailTimer = setInterval(processMail, 5000);
 mailTimer.unref();
 void processMail();
 const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
+const port = Number(process.env.PORT || 3000);
+if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT must be an integer between 1 and 65535.');
 const server = app.listen(port, host, () => console.log(`Boutique API listening on ${host}:${port}`));
 function shutdown() { clearInterval(mailTimer); server.close(async () => { await processMail(); db.close(); process.exit(0); }); }
 process.on('SIGINT', shutdown);

@@ -19,7 +19,7 @@ const scrollToTop = () => {
         <div class="md:col-span-12 lg:col-span-5">
           <RouterLink to="/" @click="scrollToTop">
             <h2 class="font-serif text-2xl text-theme-gold tracking-widest mb-6 uppercase hover:text-white transition-colors cursor-pointer">
-              WATCH BOTIQUE
+              WATCH BOUTIQUE
             </h2>
           </RouterLink>
           <p class="text-[11px] text-gray-300 font-light tracking-[0.15em] mb-8 max-w-sm uppercase leading-loose">
@@ -74,8 +74,12 @@ const scrollToTop = () => {
         <div class="md:col-span-6 lg:col-span-3">
           <h3 class="font-serif text-theme-gold text-sm uppercase tracking-widest mb-6">Legal</h3>
           <ul class="space-y-4 text-gray-300 font-light text-sm tracking-wide">
-            <li><a href="#" class="hover:text-theme-gold transition-colors duration-300 block">Privacy Policy</a></li>
-            <li><a href="#" class="hover:text-theme-gold transition-colors duration-300 block">Terms of Service</a></li>
+            <li>
+              <RouterLink to="/privacy" @click="scrollToTop" class="hover:text-theme-gold transition-colors duration-300 block">Privacy Policy</RouterLink>
+            </li>
+            <li>
+              <RouterLink to="/terms" @click="scrollToTop" class="hover:text-theme-gold transition-colors duration-300 block">Terms of Service</RouterLink>
+            </li>
             <li>
               <RouterLink to="/about" @click="scrollToTop" class="hover:text-theme-gold transition-colors duration-300 block">About Us</RouterLink>
             </li>

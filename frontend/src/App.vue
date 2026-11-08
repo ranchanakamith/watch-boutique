@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import { useCart } from './composables/useCart';
 import { useWishlist } from './composables/useWishlist';
@@ -109,6 +109,11 @@ const handleAuthSubmit = async () => {
   }
 };
 
+const handleGlobalAuthModal = (e: Event) => {
+  const customEvent = e as CustomEvent<{ mode?: 'login' | 'register' }>;
+  openAuthModal(customEvent.detail?.mode || 'login');
+};
+
 onMounted(() => {
   void restoreSession();
 
@@ -117,6 +122,12 @@ onMounted(() => {
   } else {
     document.documentElement.classList.remove('dark');
   }
+
+  window.addEventListener('open-auth-modal', handleGlobalAuthModal);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('open-auth-modal', handleGlobalAuthModal);
 });
 
 const isCustomerServicePage = computed(() => {
@@ -126,6 +137,8 @@ const isCustomerServicePage = computed(() => {
     '/returns',
     '/warranty',
     '/faq',
+    '/privacy',
+    '/terms',
   ];
 
   return servicePaths.includes(route.path);
@@ -139,26 +152,26 @@ const isCustomerServicePage = computed(() => {
     <RouterLink
       v-if="isCustomerServicePage"
       to="/"
-      class="fixed top-6 left-2 md:top-12 md:left-19 z-40 flex items-center gap-2 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border border-gray-200/50 dark:border-white/10 text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors shadow-sm"
+      class="fixed top-3 left-2.5 sm:top-6 sm:left-4 md:top-12 md:left-19 z-40 flex items-center gap-1.5 sm:gap-2 backdrop-blur-md bg-[#F8F9FA]/85 dark:bg-theme-bg/85 px-3.5 sm:px-6 py-2 sm:py-3 rounded-full border border-gray-200/50 dark:border-white/10 text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors shadow-sm"
     >
       <span class="text-sm leading-none mb-[2px]">&larr;</span>
       Home
     </RouterLink>
 
     <div
-      class="fixed top-6 right-2 md:top-12 md:right-19 flex items-center gap-5 sm:gap-6 z-40 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border border-gray-200/50 dark:border-white/10"
+      class="fixed top-3 right-2.5 sm:top-6 sm:right-4 md:top-12 md:right-19 flex items-center gap-2.5 sm:gap-6 z-40 backdrop-blur-md bg-[#F8F9FA]/85 dark:bg-theme-bg/85 px-3.5 sm:px-6 py-2 sm:py-3 rounded-full border border-gray-200/50 dark:border-white/10"
     >
       <button
         v-if="!isAuthenticated"
         @click="openAuthModal('login')"
-        class="text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors"
+        class="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors"
       >
         Sign In
       </button>
 
-      <div v-else class="flex items-center gap-4 group relative">
+      <div v-else class="flex items-center gap-3 sm:gap-4 group relative">
         <span
-          class="text-[10px] uppercase tracking-[0.2em] text-theme-gold hidden sm:flex items-center gap-2 cursor-pointer"
+          class="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-theme-gold hidden sm:flex items-center gap-2 cursor-pointer"
         >
           <img
             v-if="user?.image"
@@ -183,7 +196,7 @@ const isCustomerServicePage = computed(() => {
         <button
           @click="logout"
           :disabled="isLoading"
-          class="text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-red-400 transition-colors"
+          class="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-gray-500 hover:text-red-400 transition-colors"
         >
           Sign Out
         </button>
@@ -195,7 +208,7 @@ const isCustomerServicePage = computed(() => {
 
       <button
         @click="toggleTheme"
-        class="text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors"
+        class="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors"
       >
         <span v-if="isDarkMode">☀ Light</span>
         <span v-else>☾ Dark</span>
@@ -256,7 +269,7 @@ const isCustomerServicePage = computed(() => {
       </button>
     </div>
 
-    <main class="flex-grow flex flex-col p-8 md:p-16">
+    <main class="flex-grow flex flex-col px-3 py-6 sm:px-8 sm:py-12 md:p-16 max-w-full overflow-x-hidden">
       <p
         v-if="authError && !isLoginModalOpen"
         role="alert"
@@ -267,20 +280,20 @@ const isCustomerServicePage = computed(() => {
 
       <header
         v-if="!isCustomerServicePage"
-        class="mb-16 text-center mt-16 md:mt-20 flex flex-col items-center"
+        class="text-center mt-12 sm:mt-16 md:mt-20 flex flex-col items-center px-2"
       >
         <h1
           @click="route.path === '/' ? resetHomeFilters() : router.push('/')"
-          class="animate-glow cursor-pointer text-3xl md:text-5xl font-serif text-gray-900 dark:text-white tracking-[0.25em] uppercase font-light mb-6 transition-colors duration-700 hover:text-theme-gold dark:hover:text-theme-gold"
+          class="animate-glow cursor-pointer text-2xl sm:text-3xl md:text-5xl font-serif text-gray-900 dark:text-white tracking-[0.15em] sm:tracking-[0.25em] uppercase font-light mb-4 sm:mb-6 transition-colors duration-700 hover:text-theme-gold dark:hover:text-theme-gold"
         >
           The Premium <br class="md:hidden" />
           Watch Boutique
         </h1>
 
-        <div class="h-[1px] w-12 bg-theme-gold mb-8"></div>
+        <div class="h-[1px] w-12 bg-theme-gold mb-6 sm:mb-8"></div>
 
         <nav
-          class="flex items-center gap-8 text-[10px] uppercase tracking-[0.3em] font-medium"
+          class="flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-8 gap-y-2 text-[9px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.3em] font-medium max-w-full px-2"
         >
           <RouterLink
             to="/"
@@ -332,7 +345,7 @@ const isCustomerServicePage = computed(() => {
       ></div>
 
       <div
-        class="relative backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 w-full max-w-md p-10 shadow-[20px_0_40px_rgba(0,0,0,0.08)] border border-white/50 dark:border-white/10 rounded-xl animate-fade-in mx-4"
+        class="relative backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 w-full max-w-md p-6 sm:p-10 shadow-[20px_0_40px_rgba(0,0,0,0.08)] border border-white/50 dark:border-white/10 rounded-xl animate-fade-in mx-4"
       >
         <button
           @click="isLoginModalOpen = false"
@@ -477,7 +490,7 @@ const isCustomerServicePage = computed(() => {
     ></div>
 
     <div
-      class="fixed top-0 right-0 h-full w-80 md:w-96 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 shadow-[20px_0_40px_rgba(0,0,0,0.08)] z-[110] transform transition-transform duration-700 ease-in-out border-l border-gray-200/50 dark:border-white/10 rounded-l-3xl p-8 flex flex-col"
+      class="fixed top-0 right-0 h-full w-[88vw] sm:w-80 md:w-96 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 shadow-[20px_0_40px_rgba(0,0,0,0.08)] z-[110] transform transition-transform duration-700 ease-in-out border-l border-gray-200/50 dark:border-white/10 rounded-l-3xl p-5 sm:p-8 flex flex-col"
       :class="isWishlistOpen ? 'translate-x-0' : 'translate-x-full'"
     >
       <div class="flex justify-between items-center mb-8">
@@ -555,7 +568,7 @@ const isCustomerServicePage = computed(() => {
     ></div>
 
     <div
-      class="fixed top-0 right-0 h-full w-80 md:w-96 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 shadow-[20px_0_40px_rgba(0,0,0,0.08)] z-[110] transform transition-transform duration-700 ease-in-out border-l border-gray-200/50 dark:border-white/10 rounded-l-3xl p-8 flex flex-col"
+      class="fixed top-0 right-0 h-full w-[88vw] sm:w-80 md:w-96 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 shadow-[20px_0_40px_rgba(0,0,0,0.08)] z-[110] transform transition-transform duration-700 ease-in-out border-l border-gray-200/50 dark:border-white/10 rounded-l-3xl p-5 sm:p-8 flex flex-col"
       :class="isCartOpen ? 'translate-x-0' : 'translate-x-full'"
     >
       <div class="flex justify-between items-center mb-8">

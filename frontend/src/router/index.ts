@@ -10,6 +10,7 @@ const router = createRouter({
   },
 
   routes: [
+    { path: '/:pathMatch(.*)*', component: () => import('../views/NotFoundView.vue') },
     { path: '/account/security', component: () => import('../views/AccountSecurityView.vue') },
     { path: '/account/forgot-password', component: () => import('../views/AccountRecoveryView.vue') },
     { path: '/account/reset-password', component: () => import('../views/AccountRecoveryView.vue') },
@@ -63,6 +64,16 @@ const router = createRouter({
       path: '/faq',
       name: 'faq',
       component: () => import('../views/FaqView.vue')
+    },
+    {
+      path: '/privacy',
+      name: 'privacy',
+      component: () => import('../views/PrivacyView.vue')
+    },
+    {
+      path: '/terms',
+      name: 'terms',
+      component: () => import('../views/TermsView.vue')
     }
   ]
 })
