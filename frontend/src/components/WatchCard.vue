@@ -86,7 +86,7 @@ const goToWatchInfo = () => {
 
 <template>
   <div ref="cardRef" @click="goToWatchInfo" class="flex flex-col group cursor-pointer">
-    <div class="relative bg-gray-50 dark:bg-theme-card p-8 mb-6 overflow-hidden flex items-center justify-center h-[350px] transition-colors duration-700">
+    <div class="relative bg-gray-50 dark:bg-theme-card p-5 sm:p-8 mb-4 sm:mb-6 overflow-hidden flex items-center justify-center h-[280px] sm:h-[350px] transition-colors duration-700">
       
       <!-- Wishlist button -->
       <button @click.stop="handleToggleWishlist" class="absolute top-4 right-4 z-10 text-gray-400 hover:text-theme-gold transition-colors">
@@ -152,15 +152,15 @@ const goToWatchInfo = () => {
       
       <button :disabled="watch.stock <= 0" @click.stop="handleAddToCart"
               :class="[
-                'flex-1 py-3 text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border rounded-full border active:scale-95',
-                isAddingToBag ? 'bg-theme-gold border-theme-gold text-white dark:text-theme-bg' : 'border-gray-900 rounded-full border dark:border-white text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white dark:hover:text-theme-bg'
+                'flex-1 py-2.5 sm:py-3 text-[8px] sm:text-[9px] uppercase tracking-[0.1em] sm:tracking-[0.2em] transition-all duration-300 border rounded-full active:scale-95 text-center',
+                isAddingToBag ? 'bg-theme-gold border-theme-gold text-white dark:text-theme-bg' : 'border-gray-900 dark:border-white text-gray-900 dark:text-white hover:bg-theme-gold hover:border-theme-gold hover:text-white dark:hover:text-theme-bg'
               ]">
         {{ isAddingToBag ? 'Added ✓' : (watch.stock <= 0 ? 'Sold out' : 'Add to Bag') }}
       </button>
 
       <button :disabled="watch.stock <= 0" @click.stop="handleBuyNow"
               :class="[
-                'flex-1 py-3 text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border rounded-full border  active:scale-95 bg-theme-gold border-theme-gold text-white dark:text-theme-bg hover:opacity-80',
+                'flex-1 py-2.5 sm:py-3 text-[8px] sm:text-[9px] uppercase tracking-[0.1em] sm:tracking-[0.2em] transition-all duration-300 border rounded-full active:scale-95 bg-theme-gold border-theme-gold text-white dark:text-theme-bg hover:opacity-80 text-center',
                 isBuyingNow ? 'animate-pulse' : ''
               ]">
         {{ isBuyingNow ? 'Wait...' : 'Buy Now' }}

@@ -64,6 +64,16 @@ const router = createRouter({
       path: '/faq',
       name: 'faq',
       component: () => import('../views/FaqView.vue')
+    },
+    {
+      path: '/privacy',
+      name: 'privacy',
+      component: () => import('../views/PrivacyView.vue')
+    },
+    {
+      path: '/terms',
+      name: 'terms',
+      component: () => import('../views/TermsView.vue')
     }
   ]
 })

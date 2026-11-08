@@ -51,6 +51,43 @@ Password recovery, email verification and welcome emails are implemented; see ba
 
 Before launch, the owner must supply real products/images/specifications and stock, currency and delivery prices/coverage, approved warranty/returns/privacy/terms content, verified business contact details, email sender credentials and inbox, payment-provider credentials if online payments are wanted, and hosting/domain access. Configure HTTPS, APP_ORIGIN and ACCOUNT_SECURITY_KEY; securely back up the database and its existing security key. Do not convert USD catalog amounts to another currency by merely changing the currency label. The shipping/returns/FAQ claims are sample content and require owner approval before accepting real orders.
 
+## DevOps & Docker Deployment
+
+The application includes an enterprise-grade multi-stage Docker setup and automated CI/CD pipeline:
+
+### 1. One-Command Production Launch (Docker Compose)
+
+Make sure Docker Desktop is running, then execute:
+
+```powershell
+docker compose up -d --build
+```
+
+- Application runs at: **http://localhost:3000**
+- Healthcheck status can be inspected with: `docker ps`
+- SQLite database persists in a named volume (`boutique_db_data`), surviving container restarts.
+
+### 2. DevOps Architecture & Security Highlights
+
+- **Multi-Stage Build**: Stage 1 builds the Vue 3 SPA with Node 24 Alpine; Stage 2 bundles only production dependencies and static assets.
+- **CIS Benchmark Non-Root User**: The container drops root privileges and executes as the non-root `node` user (`USER node`).
+- **Container Health Check Probe**: Automatically pings `/api/health` via `wget` every 30 seconds.
+- **Automated CI/CD Pipeline** (`.github/workflows/devops-ci.yml`):
+  1. Automated linting & 29 backend unit/integration tests
+  2. Automated Vue frontend typecheck & production build
+  3. Docker container build, spin-up, and live healthcheck smoke test.
+- **Resource Constraints & Log Rotation**: Docker Compose limits CPU to 1.0, RAM to 512MB, and limits log files to 10MB x 3 to prevent disk exhaustion.
+
+### 3. Granting Admin in Docker
+
+Register your account on http://localhost:3000, then run:
+
+```powershell
+docker compose exec watch-boutique npm run admin -- your-email@example.com
+```
+
+Or set `INITIAL_ADMIN_EMAIL=your-email@example.com` in `docker-compose.yml` to automatically grant admin rights upon registration.
+
 ## Checks
 
     cd D:\watch\watch-boutique\backend

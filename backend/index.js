@@ -5,6 +5,11 @@ import { createWelcomeSender, createWelcomeWorker } from './mail.js';
 
 const db = openDatabase();
 if (!db.prepare('SELECT 1 FROM products LIMIT 1').get() && !db.prepare('SELECT 1 FROM catalog_imports LIMIT 1').get()) seedCatalog(db);
+const initialAdmin = process.env.INITIAL_ADMIN_EMAIL?.trim().toLowerCase();
+if (initialAdmin) {
+  const res = db.prepare("UPDATE users SET role = 'admin' WHERE email = ?").run(initialAdmin);
+  if (res.changes) console.log(`Auto-granted administrator role to ${initialAdmin}`);
+}
 const app = await createApp(db);
 const sender = createWelcomeSender();
 const mailWorker = createWelcomeWorker(db, sender);

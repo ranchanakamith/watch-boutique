@@ -96,7 +96,7 @@ onMounted(() => {
   <div class="w-full pb-24">
     
     <Teleport to="body">
-      <button @click="goBack" class="fixed top-6 left-2 md:top-12 md:left-19 z-[100] flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors group backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 px-6 py-3 rounded-full border border-gray-200/50 dark:border-white/10 shadow-sm active:scale-[0.98]">
+      <button @click="goBack" class="fixed top-3 left-2.5 sm:top-6 sm:left-4 md:top-12 md:left-19 z-[100] flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors group backdrop-blur-md bg-[#F8F9FA]/85 dark:bg-theme-bg/85 px-3.5 sm:px-6 py-2 sm:py-3 rounded-full border border-gray-200/50 dark:border-white/10 shadow-sm active:scale-[0.98]">
         <span class="transform group-hover:-translate-x-1 transition-transform duration-300">&larr;</span> 
         Back
       </button>

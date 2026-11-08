@@ -344,7 +344,7 @@ watch(
     <!-- Admin Content -->
     <template v-else>
       <!-- Navigation Tabs -->
-      <div class="flex items-center gap-2 mb-6 border-b border-gray-200 dark:border-white/10 pb-2">
+      <div class="flex items-center gap-2 mb-6 border-b border-gray-200 dark:border-white/10 pb-2 overflow-x-auto whitespace-nowrap">
         <button
           @click="tab = 'products'"
           :class="[
