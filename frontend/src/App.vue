@@ -147,19 +147,19 @@ const isCustomerServicePage = computed(() => {
 
 <template>
   <div
-    class="min-h-screen flex flex-col transition-colors duration-700 bg-[white] dark:bg-theme-bg font-sans text-gray-900 dark:text-white selection:bg-theme-gold selection:text-black relative overflow-x-hidden"
+    class="min-h-screen flex flex-col bg-white dark:bg-theme-bg font-sans text-gray-900 dark:text-white selection:bg-theme-gold selection:text-black relative overflow-x-hidden"
   >
     <RouterLink
       v-if="isCustomerServicePage"
       to="/"
-      class="fixed top-3 left-2.5 sm:top-6 sm:left-4 md:top-12 md:left-19 z-40 flex items-center gap-1.5 sm:gap-2 backdrop-blur-md bg-[#F8F9FA]/85 dark:bg-theme-bg/85 px-3.5 sm:px-6 py-2 sm:py-3 rounded-full border border-gray-200/50 dark:border-white/10 text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors shadow-sm"
+      class="fixed top-3 left-2.5 sm:top-6 sm:left-4 md:top-12 md:left-19 z-40 flex items-center gap-1.5 sm:gap-2 transform-gpu backdrop-blur-md bg-[#F8F9FA]/90 dark:bg-theme-bg/90 px-3.5 sm:px-6 py-2 sm:py-3 rounded-full border border-gray-200/50 dark:border-white/10 text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-gray-500 hover:text-theme-gold transition-colors shadow-sm"
     >
       <span class="text-sm leading-none mb-[2px]">&larr;</span>
       Home
     </RouterLink>
 
     <div
-      class="fixed top-3 right-2.5 sm:top-6 sm:right-4 md:top-12 md:right-19 flex items-center gap-2.5 sm:gap-6 z-40 backdrop-blur-md bg-[#F8F9FA]/85 dark:bg-theme-bg/85 px-3.5 sm:px-6 py-2 sm:py-3 rounded-full border border-gray-200/50 dark:border-white/10"
+      class="fixed top-3 right-2.5 sm:top-6 sm:right-4 md:top-12 md:right-19 flex items-center gap-2.5 sm:gap-6 z-40 transform-gpu backdrop-blur-md bg-[#F8F9FA]/90 dark:bg-theme-bg/90 px-3.5 sm:px-6 py-2 sm:py-3 rounded-full border border-gray-200/50 dark:border-white/10 shadow-sm"
     >
       <button
         v-if="!isAuthenticated"

@@ -125,54 +125,64 @@ const filteredWatches = computed(() => {
   });
 });
 
-const getEditDistance = (a: string, b: string): number => {
-  if (a.length === 0) return b.length;
-  if (b.length === 0) return a.length;
-
-  const rows = b.length + 1;
-  const cols = a.length + 1;
-  const matrix: number[][] = Array.from({ length: rows }, () => Array(cols).fill(0));
-
-  for (let i = 0; i < rows; i++) matrix[i]![0] = i;
-  for (let j = 0; j < cols; j++) matrix[0]![j] = j;
-
-  for (let i = 1; i < rows; i++) {
-    const currentRow = matrix[i]!;
-    const previousRow = matrix[i - 1]!;
-    for (let j = 1; j < cols; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        currentRow[j] = previousRow[j - 1]!;
-      } else {
-        currentRow[j] = Math.min(
-          previousRow[j - 1]! + 1, 
-          Math.min(currentRow[j - 1]! + 1, 
-          previousRow[j]! + 1) 
-        );
-      }
+// Memoized dictionary computed once when watches change
+const cachedDictionary = computed(() => {
+  const dict = new Set<string>();
+  for (const w of watches.value) {
+    if (w.brand) dict.add(w.brand.toLowerCase());
+    const words = w.title.toLowerCase().split(/\s+/);
+    for (const word of words) {
+      const clean = word.replace(/[^a-z0-9]/g, '');
+      if (clean.length > 2) dict.add(clean);
     }
   }
-  return matrix[b.length]![a.length]!;
+  return Array.from(dict);
+});
+
+// Fast O(min(N, M)) memory Levenshtein distance without matrix allocation
+const getEditDistance = (a: string, b: string): number => {
+  if (a === b) return 0;
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  if (Math.abs(a.length - b.length) > 2) return 99;
+
+  let prev: number[] = Array.from({ length: b.length + 1 }, (_, i) => i);
+  let curr: number[] = new Array(b.length + 1).fill(0);
+
+  for (let i = 0; i < a.length; i++) {
+    curr[0] = i + 1;
+    for (let j = 0; j < b.length; j++) {
+      const cost = a[i] === b[j] ? 0 : 1;
+      const prevJ1 = prev[j + 1] ?? 0;
+      const prevJ = prev[j] ?? 0;
+      const currJ = curr[j] ?? 0;
+      curr[j + 1] = Math.min(
+        currJ + 1,
+        prevJ1 + 1,
+        prevJ + cost
+      );
+    }
+    const temp = prev;
+    prev = curr;
+    curr = temp;
+  }
+  return prev[b.length] ?? b.length;
 };
 
 const searchSuggestion = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
   if (!query || filteredWatches.value.length > 0) return null;
 
-  const dictionary = new Set<string>();
-  watches.value.forEach(w => {
-    if (w.brand) dictionary.add(w.brand.toLowerCase());
-    w.title.toLowerCase().split(' ').forEach(word => dictionary.add(word.replace(/[^a-z0-9]/g, '')));
-  });
-
   let bestMatch = '';
-  let minDistance = Infinity;
+  let minDistance = 3;
 
-  for (const word of dictionary) {
-    if (!word || Math.abs(word.length - query.length) > 3) continue; 
+  for (const word of cachedDictionary.value) {
+    if (Math.abs(word.length - query.length) > 2) continue;
     const dist = getEditDistance(query, word);
-    if (dist < minDistance && dist <= 2) { 
+    if (dist < minDistance) {
       minDistance = dist;
       bestMatch = word;
+      if (dist === 1) break; // early exit for very close match
     }
   }
   return bestMatch ? bestMatch : null;

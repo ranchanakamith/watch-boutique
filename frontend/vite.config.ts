@@ -18,7 +18,7 @@ export default defineConfig({
   },
   plugins: [
     vue(),
-    vueDevTools(),
+    ...(process.env.VITE_DEVTOOLS === 'true' ? [vueDevTools()] : []),
   ],
   resolve: {
     alias: {
@@ -26,8 +26,10 @@ export default defineConfig({
     },
   },
   build: {
+    target: 'es2022',
     cssCodeSplit: true,
     chunkSizeWarningLimit: 600,
+    reportCompressedSize: false,
     rollupOptions: {
       output: {
         manualChunks(id) {

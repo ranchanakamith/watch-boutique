@@ -46,15 +46,15 @@ const triggerPortal = () => {
 <template>
   <Teleport to="body">
     
-    <button @click="isOpen = true" class="fixed top-3 left-2.5 sm:top-6 sm:left-4 md:top-12 md:left-19 z-40 flex flex-col items-center justify-center gap-1 sm:gap-1.5 cursor-pointer group backdrop-blur-md bg-[#F8F9FA]/85 dark:bg-theme-bg/85 px-4 py-3 sm:px-6 sm:py-4 rounded-full border border-gray-200/50 dark:border-white/10 transition-all duration-500 hover:bg-white/90 dark:hover:bg-theme-card/90">
+    <button @click="isOpen = true" class="fixed top-3 left-2.5 sm:top-6 sm:left-4 md:top-12 md:left-19 z-40 flex flex-col items-center justify-center gap-1 sm:gap-1.5 cursor-pointer group transform-gpu backdrop-blur-md bg-[#F8F9FA]/90 dark:bg-theme-bg/90 px-4 py-3 sm:px-6 sm:py-4 rounded-full border border-gray-200/50 dark:border-white/10 transition-all duration-300 hover:bg-white/95 dark:hover:bg-theme-card/95 shadow-sm">
       <div class="w-4 sm:w-5 h-[1px] bg-gray-900 dark:bg-white group-hover:bg-theme-gold transition-colors duration-300"></div>
       <div class="w-4 sm:w-5 h-[1px] bg-gray-900 dark:bg-white group-hover:bg-theme-gold transition-colors duration-300"></div>
       <div class="w-4 sm:w-5 h-[1px] bg-gray-900 dark:bg-white group-hover:bg-theme-gold transition-colors duration-300"></div>
     </button>
 
-    <div v-if="isOpen" @click="isOpen = false" class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[70] transition-opacity duration-500"></div>
+    <div v-if="isOpen" @click="isOpen = false" class="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[70] transition-opacity duration-300"></div>
 
-    <div class="fixed top-0 left-0 h-full w-[85vw] sm:w-80 md:w-96 backdrop-blur-md bg-[#F8F9FA]/80 dark:bg-theme-bg/80 shadow-[20px_0_40px_rgba(0,0,0,0.08)] z-[80] transform transition-transform duration-700 ease-in-out border-r border-gray-200/50 dark:border-white/10 rounded-r-3xl p-6 sm:p-8 flex flex-col" :class="isOpen ? 'translate-x-0' : '-translate-x-full'">
+    <div class="fixed top-0 left-0 h-full w-[85vw] sm:w-80 md:w-96 transform-gpu backdrop-blur-md bg-[#F8F9FA]/95 dark:bg-theme-bg/95 shadow-[20px_0_40px_rgba(0,0,0,0.08)] z-[80] transform transition-transform duration-500 ease-in-out border-r border-gray-200/50 dark:border-white/10 rounded-r-3xl p-6 sm:p-8 flex flex-col will-change-transform" :class="isOpen ? 'translate-x-0' : '-translate-x-full'">
    
       <button @click="isOpen = false" class="self-end text-gray-400 hover:text-theme-gold text-2xl font-light mb-12">&times;</button>
       <h3 class="font-serif text-2xl text-gray-900 dark:text-white mb-12 tracking-wide font-light">Refine<br/>Collection</h3>

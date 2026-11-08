@@ -1,5 +1,6 @@
 import express from 'express';
 import helmet from 'helmet';
+import compression from 'compression';
 import { rateLimit } from 'express-rate-limit';
 import { randomBytes } from 'node:crypto';
 import { existsSync } from 'node:fs';
@@ -40,6 +41,7 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
   const dummyHash = await hashPassword(randomBytes(32).toString('hex'));
   const cookieOptions = { httpOnly: true, sameSite: 'strict', secure: production, path: '/api' };
   app.disable('x-powered-by');
+  app.use(compression());
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
@@ -157,15 +159,29 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
     const cacheKey = `${limit}:${skip}:${q.toLowerCase()}:${category}`;
     const cached = catalogCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp < 30_000)) {
+      res.set('Cache-Control', 'public, max-age=15, stale-while-revalidate=60');
       return res.json(cached.data);
     }
 
-    const where = `WHERE (instr(lower(title || ' ' || brand || ' ' || description), lower(?)) > 0) AND (? = '' OR category = ?)`;
-    const params = [q, category, category];
-    const { total } = db.prepare(`SELECT count(*) AS total FROM products ${where}`).get(...params);
-    const products = db.prepare(`SELECT * FROM products ${where} ORDER BY price DESC, id ASC LIMIT ? OFFSET ?`).all(...params, limit, skip).map(productFromRow);
+    let whereClause = '';
+    const params = [];
+    const cleanQ = q.trim();
+    if (cleanQ && category) {
+      whereClause = `WHERE (instr(lower(title || ' ' || brand || ' ' || description), lower(?)) > 0) AND category = ?`;
+      params.push(cleanQ, category);
+    } else if (cleanQ) {
+      whereClause = `WHERE (instr(lower(title || ' ' || brand || ' ' || description), lower(?)) > 0)`;
+      params.push(cleanQ);
+    } else if (category) {
+      whereClause = `WHERE category = ?`;
+      params.push(category);
+    }
+
+    const { total } = db.prepare(`SELECT count(*) AS total FROM products ${whereClause}`).get(...params);
+    const products = db.prepare(`SELECT * FROM products ${whereClause} ORDER BY price DESC, id ASC LIMIT ? OFFSET ?`).all(...params, limit, skip).map(productFromRow);
     const result = { products, total, skip, limit };
     catalogCache.set(cacheKey, { data: result, timestamp: Date.now() });
+    res.set('Cache-Control', 'public, max-age=15, stale-while-revalidate=60');
     res.json(result);
   });
   app.param('id', (req, res, next, value) => {
@@ -203,8 +219,18 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
 
   const clientDist = resolve(fileURLToPath(new URL('../frontend/dist', import.meta.url)));
   if (existsSync(clientDist)) {
-    app.use(express.static(clientDist));
+    app.use(express.static(clientDist, {
+      maxAge: '1y',
+      immutable: true,
+      index: false,
+      setHeaders(res, filePath) {
+        if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache');
+        }
+      }
+    }));
     app.get('/{*path}', (req, res) => {
+      res.setHeader('Cache-Control', 'no-cache');
       res.sendFile(resolve(clientDist, 'index.html'));
     });
   }

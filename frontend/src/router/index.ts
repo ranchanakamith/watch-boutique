@@ -4,9 +4,9 @@ import HomeView from '../views/HomeView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   
-  // This automatically scrolls to top on every page change!
+  // Instant top scroll on route transitions
   scrollBehavior() {
-    return { top: 0, behavior: 'smooth' }
+    return { top: 0 }
   },
 
   routes: [

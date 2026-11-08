@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24.0.0" },
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "start": "node --env-file-if-exists=.env index.js",
     "dev": "node --env-file-if-exists=.env --watch index.js",
@@ -13,6 +15,7 @@
     "mail:check": "node mail-check.js"
   },
   "dependencies": {
+    "compression": "^1.8.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",
     "helmet": "^8.3.0"

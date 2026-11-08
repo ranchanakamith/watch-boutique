@@ -17,10 +17,10 @@ export function openDatabase(filename = configuredDatabasePath()) {
   const db = new DatabaseSync(filename);
   db.exec(`
     PRAGMA foreign_keys = ON;
-    PRAGMA journal_mode = DELETE;
+    PRAGMA journal_mode = WAL;
     PRAGMA busy_timeout = 5000;
     PRAGMA synchronous = NORMAL;
-    PRAGMA cache_size = -4000;
+    PRAGMA cache_size = -16000;
     PRAGMA temp_store = MEMORY;
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY, email TEXT NOT NULL UNIQUE COLLATE NOCASE,

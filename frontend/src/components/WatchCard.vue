@@ -23,34 +23,50 @@ const isBuyingNow = ref(false);
 const heartAnim = ref(false);
 const isImageLoaded = ref(false);
 
-// Scroll-reveal state for MOBILE only
+// Scroll-reveal state for MOBILE only - Shared Observer Singleton (0 memory overhead)
 const cardRef = ref<HTMLElement | null>(null);
 const isInCenter = ref(false);
-let observer: IntersectionObserver | null = null;
 
-onMounted(() => {
-  // Only initialize IntersectionObserver on mobile viewports (< 768px)
-  if (cardRef.value && typeof window !== 'undefined' && window.innerWidth < 768) {
-    observer = new IntersectionObserver(
+// Shared singleton observer across all cards
+let sharedObserver: IntersectionObserver | null = null;
+const observerCallbacks = new WeakMap<HTMLElement, (intersecting: boolean) => void>();
+
+function getSharedObserver() {
+  if (typeof window === 'undefined') return null;
+  if (!sharedObserver) {
+    sharedObserver = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          isInCenter.value = entry.isIntersecting;
-        });
+        for (const entry of entries) {
+          const cb = observerCallbacks.get(entry.target as HTMLElement);
+          if (cb) cb(entry.isIntersecting);
+        }
       },
       {
         root: null,
-        rootMargin: '-42% 0px -42% 0px',
+        rootMargin: '-30% 0px -30% 0px',
         threshold: 0,
       }
     );
-    observer.observe(cardRef.value);
+  }
+  return sharedObserver;
+}
+
+onMounted(() => {
+  if (cardRef.value && typeof window !== 'undefined' && window.innerWidth < 768) {
+    const obs = getSharedObserver();
+    if (obs) {
+      observerCallbacks.set(cardRef.value, (intersecting) => {
+        isInCenter.value = intersecting;
+      });
+      obs.observe(cardRef.value);
+    }
   }
 });
 
 onUnmounted(() => {
-  if (observer) {
-    observer.disconnect();
-    observer = null;
+  if (cardRef.value && sharedObserver) {
+    sharedObserver.unobserve(cardRef.value);
+    observerCallbacks.delete(cardRef.value);
   }
 });
 
@@ -59,16 +75,13 @@ const handleAddToCart = () => {
   isAddingToBag.value = true;
   setTimeout(() => {
     isAddingToBag.value = false;
-  }, 1500);
+  }, 1200);
 };
 
 const handleBuyNow = () => {
   addToCart(props.watch);
   isBuyingNow.value = true;
-  setTimeout(() => {
-    isBuyingNow.value = false;
-    void router.push('/checkout');
-  }, 600);
+  void router.push('/checkout');
 };
 
 const handleToggleWishlist = () => {
@@ -76,7 +89,7 @@ const handleToggleWishlist = () => {
   heartAnim.value = true;
   setTimeout(() => {
     heartAnim.value = false;
-  }, 300);
+  }, 250);
 };
 
 const goToWatchInfo = () => {
