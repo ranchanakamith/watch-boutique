@@ -7,7 +7,14 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
+  # ============================================================
+  # JOB 1 — Backend Unit & Integration Tests (29 automated tests)
+  # ============================================================
   test-and-lint:
     name: 1. Unit & Integration Testing
     runs-on: ubuntu-latest
@@ -34,6 +41,9 @@ jobs:
           cd backend
           npm test
 
+  # ============================================================
+  # JOB 2 — Frontend TypeScript Type-Check & Production Build
+  # ============================================================
   build-frontend:
     name: 2. Frontend Typecheck & Production Build
     runs-on: ubuntu-latest
@@ -58,8 +68,11 @@ jobs:
           cd frontend
           npm run build
 
+  # ============================================================
+  # JOB 3 — Docker Build, Container Smoke Test & Security Scan
+  # ============================================================
   docker-pipeline:
-    name: 3. Docker Build & Container Health Probe
+    name: 3. Docker Build, Smoke Test & Trivy Security Scan
     needs: [test-and-lint, build-frontend]
     runs-on: ubuntu-latest
     steps:
@@ -95,7 +108,88 @@ jobs:
           curl --fail --retry 5 --retry-delay 2 http://localhost:3000/api/health || exit 1
 
           echo "Probing public catalog endpoint..."
-          curl --fail http://localhost:3000/api/products?limit=5 || exit 1
+          curl --fail "http://localhost:3000/api/products?limit=5" || exit 1
+
+          echo "Probing API docs endpoint..."
+          curl --fail http://localhost:3000/api/docs || exit 1
 
           echo "Docker container smoke tests passed with flying colors!"
           docker stop test-boutique-app
+
+      # ----------------------------------------------------------
+      # Trivy — Container Vulnerability Scanner (DevSecOps)
+      # Scans the built image for CVE vulnerabilities in OS packages
+      # and Node.js dependencies. CRITICAL/HIGH failures are reported.
+      # ----------------------------------------------------------
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: watch-boutique:ci-latest
+          format: table
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy Scan Report (SARIF)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: watch-boutique:ci-latest
+          format: sarif
+          output: trivy-results.sarif
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload SARIF to GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
+  # ============================================================
+  # JOB 4 — Publish Docker Image to GitHub Container Registry
+  #          Runs ONLY on push to main (not on PRs)
+  # ============================================================
+  publish-image:
+    name: 4. Publish Docker Image to GHCR
+    needs: [docker-pipeline]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker Metadata (Tags & Labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build & Push Image to GHCR
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

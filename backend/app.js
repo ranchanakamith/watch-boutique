@@ -123,6 +123,189 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
       res.status(503).json({ status: 'unhealthy', database: 'disconnected' });
     }
   });
+
+  // ─── OpenAPI / Swagger Interactive Documentation ───────────────────────────
+  app.get('/api/docs', (req, res) => {
+    const spec = {
+      openapi: '3.0.3',
+      info: {
+        title: 'Watch Boutique API',
+        version: '1.0.0',
+        description: 'REST API for The Premium Watch Boutique — a luxury e-commerce platform. Provides catalogue browsing, cart/wishlist management, secure checkout, order tracking, and admin tools.',
+        contact: { name: 'DevOps Module Project', url: origin },
+      },
+      servers: [{ url: origin, description: production ? 'Production' : 'Development' }],
+      tags: [
+        { name: 'System', description: 'Health and documentation endpoints' },
+        { name: 'Auth', description: 'Registration, login, session management and MFA' },
+        { name: 'Products', description: 'Public catalogue browsing and admin CRUD' },
+        { name: 'Orders', description: 'Customer checkout and order management' },
+        { name: 'Account', description: 'Saved cart, wishlist and account collections' },
+        { name: 'Contact', description: 'Customer enquiry submission' },
+      ],
+      components: {
+        securitySchemes: {
+          cookieAuth: { type: 'apiKey', in: 'cookie', name: 'boutique_session', description: 'HTTP-only session cookie set after login.' },
+        },
+        schemas: {
+          Product: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer', example: 1 },
+              title: { type: 'string', example: 'Rolex Submariner Date' },
+              description: { type: 'string' },
+              price: { type: 'number', example: 10900 },
+              discountPercentage: { type: 'number', example: 10 },
+              rating: { type: 'number', example: 4.8 },
+              stock: { type: 'integer', example: 3 },
+              brand: { type: 'string', example: 'Rolex' },
+              category: { type: 'string', example: 'mens-watches' },
+              thumbnail: { type: 'string', format: 'uri' },
+              images: { type: 'array', items: { type: 'string', format: 'uri' } },
+            },
+          },
+          User: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              name: { type: 'string', example: 'John Doe' },
+              email: { type: 'string', format: 'email' },
+              role: { type: 'string', enum: ['customer', 'admin'] },
+            },
+          },
+          Order: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              status: { type: 'string', enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'] },
+              paymentStatus: { type: 'string', enum: ['unpaid', 'paid'] },
+              totalCents: { type: 'integer', example: 109000 },
+              tracking: { type: 'string', example: 'TRK-20241108-001' },
+              createdAt: { type: 'string', format: 'date-time' },
+              items: { type: 'array', items: { type: 'object', properties: { title: { type: 'string' }, quantity: { type: 'integer' }, unitCents: { type: 'integer' } } } },
+            },
+          },
+          Error: {
+            type: 'object',
+            properties: { message: { type: 'string', example: 'Please sign in.' } },
+          },
+        },
+      },
+      paths: {
+        '/api/health': {
+          get: {
+            tags: ['System'], summary: 'Health check & system telemetry',
+            description: 'Returns service health, uptime, database connectivity status and memory metrics. Used by Docker HEALTHCHECK probe.',
+            responses: {
+              200: { description: 'Service is healthy', content: { 'application/json': { schema: { type: 'object', properties: { status: { type: 'string', example: 'ok' }, service: { type: 'string' }, uptimeSeconds: { type: 'integer' }, database: { type: 'string', example: 'connected' }, environment: { type: 'string' }, memoryMb: { type: 'object', properties: { rss: { type: 'integer' }, heapUsed: { type: 'integer' } } } } } } } },
+              503: { description: 'Service or database unhealthy' },
+            },
+          },
+        },
+        '/api/docs': {
+          get: { tags: ['System'], summary: 'OpenAPI specification (this document)', responses: { 200: { description: 'OpenAPI 3.0 JSON spec' } } },
+        },
+        '/api/auth/register': {
+          post: {
+            tags: ['Auth'], summary: 'Create a new customer account',
+            requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['email', 'password', 'name'], properties: { email: { type: 'string', format: 'email' }, password: { type: 'string', minLength: 8, maxLength: 128 }, name: { type: 'string', maxLength: 100 } } } } } },
+            responses: { 201: { description: 'Account created; session cookie set' }, 409: { description: 'Email already registered' } },
+          },
+        },
+        '/api/auth/login': {
+          post: {
+            tags: ['Auth'], summary: 'Sign in and receive a session cookie',
+            requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['email', 'password'], properties: { email: { type: 'string', format: 'email' }, password: { type: 'string' } } } } } },
+            responses: { 200: { description: 'Logged in; session cookie set' }, 401: { description: 'Invalid credentials' } },
+          },
+        },
+        '/api/auth/me': {
+          get: { tags: ['Auth'], summary: 'Get the signed-in user profile', security: [{ cookieAuth: [] }], responses: { 200: { description: 'Current user', content: { 'application/json': { schema: { type: 'object', properties: { user: { $ref: '#/components/schemas/User' } } } } } }, 401: { description: 'Not authenticated' } } },
+        },
+        '/api/auth/logout': {
+          post: { tags: ['Auth'], summary: 'Destroy the current session', security: [{ cookieAuth: [] }], responses: { 204: { description: 'Signed out' } } },
+        },
+        '/api/products': {
+          get: {
+            tags: ['Products'], summary: 'List/search the watch catalogue',
+            description: 'Public endpoint. Supports full-text search (`q`), category filter and pagination. Results are server-cached for 30 seconds.',
+            parameters: [
+              { name: 'q', in: 'query', schema: { type: 'string' }, description: 'Full-text search across title, brand and description' },
+              { name: 'category', in: 'query', schema: { type: 'string', example: 'mens-watches' }, description: 'Filter by product category' },
+              { name: 'limit', in: 'query', schema: { type: 'integer', default: 100, maximum: 100 } },
+              { name: 'skip', in: 'query', schema: { type: 'integer', default: 0 } },
+            ],
+            responses: { 200: { description: 'Paginated product list', content: { 'application/json': { schema: { type: 'object', properties: { products: { type: 'array', items: { $ref: '#/components/schemas/Product' } }, total: { type: 'integer' }, skip: { type: 'integer' }, limit: { type: 'integer' } } } } } } },
+          },
+          post: { tags: ['Products'], summary: 'Create a new product (admin only)', security: [{ cookieAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/Product' } } } }, responses: { 201: { description: 'Product created' }, 401: { description: 'Not authenticated' }, 403: { description: 'Admin access required' } } },
+        },
+        '/api/products/{id}': {
+          get: { tags: ['Products'], summary: 'Get a single product by ID', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'Product details', content: { 'application/json': { schema: { $ref: '#/components/schemas/Product' } } } }, 404: { description: 'Product not found' } } },
+          patch: { tags: ['Products'], summary: 'Update product fields (admin only)', security: [{ cookieAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', description: 'Any subset of product fields to update' } } } }, responses: { 200: { description: 'Updated product' }, 403: { description: 'Admin access required' } } },
+          delete: { tags: ['Products'], summary: 'Delete a product (admin only)', security: [{ cookieAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 204: { description: 'Deleted' }, 403: { description: 'Admin access required' } } },
+        },
+        '/api/orders': {
+          post: {
+            tags: ['Orders'], summary: 'Place a cash-on-delivery order',
+            description: 'Creates an order from the submitted cart items. Server re-validates stock and applies current prices. Idempotent via `requestKey`.',
+            security: [{ cookieAuth: [] }],
+            requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['requestKey', 'shipping', 'items'], properties: { requestKey: { type: 'string', format: 'uuid' }, shipping: { type: 'object', properties: { name: { type: 'string' }, phone: { type: 'string' }, address: { type: 'string' }, city: { type: 'string' }, postalCode: { type: 'string' }, country: { type: 'string' } } }, items: { type: 'array', items: { type: 'object', properties: { productId: { type: 'integer' }, quantity: { type: 'integer' } } } } } } } } },
+            responses: { 201: { description: 'Order placed', content: { 'application/json': { schema: { $ref: '#/components/schemas/Order' } } } }, 409: { description: 'Out of stock or duplicate request key' } },
+          },
+          get: { tags: ['Orders'], summary: 'List all orders for the signed-in customer', security: [{ cookieAuth: [] }], responses: { 200: { description: 'Array of orders', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Order' } } } } } } },
+        },
+        '/api/orders/{id}/cancel': {
+          post: { tags: ['Orders'], summary: 'Cancel a pending or processing order', security: [{ cookieAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'Order cancelled; stock restored' }, 409: { description: 'Order cannot be cancelled in its current status' } } },
+        },
+        '/api/contact': {
+          post: {
+            tags: ['Contact'], summary: 'Submit a customer enquiry',
+            requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['name', 'email', 'message'], properties: { name: { type: 'string', maxLength: 100 }, email: { type: 'string', format: 'email' }, message: { type: 'string', maxLength: 5000 } } } } } },
+            responses: { 200: { description: 'Enquiry sent' }, 503: { description: 'Email delivery not configured' } },
+          },
+        },
+      },
+    };
+
+    // Serve as interactive Swagger UI HTML or raw JSON spec
+    const accept = req.headers.accept || '';
+    if (accept.includes('application/json') || req.query.format === 'json') {
+      return res.json(spec);
+    }
+
+    // Interactive Swagger UI — no extra npm package needed, loaded from CDN
+    res.setHeader('Content-Type', 'text/html');
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Watch Boutique — API Docs</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css"/>
+  <style>
+    body { margin: 0; }
+    .topbar { display: none !important; }
+    .swagger-ui .info .title { font-family: Georgia, serif; color: #C5A059; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    SwaggerUIBundle({
+      spec: ${JSON.stringify(spec)},
+      dom_id: '#swagger-ui',
+      deepLinking: true,
+      presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+      layout: 'BaseLayout',
+      tryItOutEnabled: true,
+      requestCredentials: 'include',
+    });
+  </script>
+</body>
+</html>`);
+  });
+  // ───────────────────────────────────────────────────────────────────────────
   app.post('/api/auth/register', async (req, res) => {
     const { email, password, name } = req.body || {};
     if (typeof email !== 'string' || email.length > 254 || !emailPattern.test(email.trim())) throw fail(400, 'Enter a valid email address.');
