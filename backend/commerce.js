@@ -8,6 +8,7 @@ export function transaction(db, operation) {
   catch (error) { if (db.isTransaction) db.exec('ROLLBACK'); throw error; }
 }
 export function storageUsage(db) {
+  if (db.dialect === "postgres") return { usedBytes: db.prepare("SELECT pg_database_size(current_database()) AS bytes").get().bytes, databaseLimitBytes: null, budgetBytes: null, engine: "PostgreSQL" };
   const path = db.prepare('PRAGMA database_list').all().find(row => row.name === 'main').file;
   const size = file => { try { return statSync(file).size; } catch { return 0; } };
   return { usedBytes: path ? ['', '-journal', '-wal', '-shm'].reduce((sum, suffix) => sum + size(path + suffix), 0) : 0,
@@ -28,7 +29,7 @@ export function registerCommerce(app, db, requireUser, requireAdmin) {
   app.post('/api/orders', requireUser, (req, res) => {
     const { items, shipping, requestKey } = req.body || {};
     if (typeof requestKey !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(requestKey)) throw fail(400, 'A checkout request key is required.');
-    if (!Array.isArray(items) || !items.length || items.length > 50) throw fail(400, 'Your bag must contain 1–50 different watches.');
+    if (!Array.isArray(items) || !items.length || items.length > 50) throw fail(400, 'Your bag must contain 1â€“50 different watches.');
     const seen = new Set();
     for (const item of items) {
       if (!item || !Number.isSafeInteger(item.productId) || item.productId < 1 || !Number.isSafeInteger(item.quantity) || item.quantity < 1 || item.quantity > 99 || seen.has(item.productId)) throw fail(400, 'Invalid or duplicate bag item.');

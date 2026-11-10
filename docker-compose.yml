@@ -1,52 +1,52 @@
 services:
-  watch-boutique:
+  database:
     build:
       context: .
-      dockerfile: Dockerfile
-    image: watch-boutique:latest
-    container_name: watch-boutique-app
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
+      dockerfile: database/Dockerfile
     environment:
-      - NODE_ENV=production
-      - HOST=0.0.0.0
-      - PORT=3000
-      - APP_ORIGIN=http://localhost:3000
-      # Optional: Auto-grant admin role upon registration
-      # - INITIAL_ADMIN_EMAIL=admin@boutique.com
-      # Optional Resend email delivery:
-      # - RESEND_API_KEY=re_your_api_key
-      # - MAIL_FROM=Watch Boutique <store@yourdomain.com>
-      # - CONTACT_INBOX=concierge@yourdomain.com
+      POSTGRES_DB: boutique
+      POSTGRES_USER: boutique
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-boutique-lab-only}
     volumes:
-      # Persistent volume for SQLite database across container recreations
-      - boutique_db_data:/app/backend/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/health || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "pg_isready -U boutique -d boutique"]
+      interval: 5s
       timeout: 5s
-      retries: 3
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 512M
-        reservations:
-          memory: 128M
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    networks:
-      - boutique-network
-
+      retries: 20
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      HOST: 0.0.0.0
+      PORT: 3000
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:8080}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://boutique:${POSTGRES_PASSWORD:-boutique-lab-only}@database:5432/boutique}
+      ACCOUNT_SECURITY_KEY: ${ACCOUNT_SECURITY_KEY:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      CONTACT_INBOX: ${CONTACT_INBOX:-}
+    volumes:
+      - security_data:/app/backend/data
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
 volumes:
-  boutique_db_data:
-    driver: local
-
-networks:
-  boutique-network:
-    driver: bridge
+  postgres_data:
+  security_data:

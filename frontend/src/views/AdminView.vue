@@ -22,7 +22,7 @@ interface Summary {
   units: number;
   lowStock: { id: number; title: string; stock: number }[];
   dailySales: { day: string; cents: number; orders: number }[];
-  storage: { usedBytes: number; databaseLimitBytes: number; budgetBytes: number };
+  storage: { usedBytes: number; databaseLimitBytes: number | null; budgetBytes: number | null; engine?: string };
 }
 
 const summary = ref<Summary | null>(null);
@@ -800,16 +800,16 @@ watch(
           <div class="bg-white dark:bg-theme-card p-5 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm">
             <h3 class="font-serif text-lg font-medium text-gray-900 dark:text-white mb-3">Database &amp; Storage</h3>
             <p class="text-xs text-gray-500 mb-2">
-              {{ (summary.storage.usedBytes / 1e6).toFixed(2) }} MB used of 200 MB maximum budget
+              {{ (summary.storage.usedBytes / 1e6).toFixed(2) }} MB used <span v-if="summary.storage.budgetBytes">of {{ summary.storage.budgetBytes / 1e6 }} MB budget</span>
             </p>
-            <div class="w-full bg-gray-200 dark:bg-white/10 rounded-full h-2 mb-4 overflow-hidden">
+            <div v-if="summary.storage.budgetBytes" class="w-full bg-gray-200 dark:bg-white/10 rounded-full h-2 mb-4 overflow-hidden">
               <div
                 class="bg-theme-gold h-2 rounded-full transition-all duration-500"
                 :style="{ width: `${Math.min(100, (summary.storage.usedBytes / summary.storage.budgetBytes) * 100)}%` }"
               ></div>
             </div>
             <p class="text-xs text-gray-400 leading-relaxed">
-              SQLite database storage is capped safely at 80 MB, providing ample headroom for customer orders, user accounts, and catalog products. Product images are hosted via fast CDN URLs.
+              {{ summary.storage.engine === "PostgreSQL" ? "PostgreSQL database. Capacity is managed by the database host." : "SQLite database with an 80 MB main-file limit." }} Product images use external URLs.
             </p>
           </div>
         </div>

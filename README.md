@@ -1,3 +1,5 @@
+> New Ubuntu/PostgreSQL setup: see [UBUNTU-LAB.md](UBUNTU-LAB.md). Default Compose now uses three services on http://localhost:8080. For Neon use compose.online.yml. The legacy notes below describe SQLite.
+
 # Watch Boutique — local setup
 
 Vue + Express + local SQLite. Node.js 24+ required.

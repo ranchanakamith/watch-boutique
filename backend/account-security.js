@@ -23,7 +23,7 @@ export function createAccountSecurity(db, { origin, production, key, sender = nu
     const row = db.prepare('SELECT * FROM security_limits WHERE key = ?').get(scope);
     if (row && row.count >= maximum) return true;
     db.prepare(`INSERT INTO security_limits(key, count, expires_at) VALUES (?, 1, ?)
-      ON CONFLICT(key) DO UPDATE SET count = count + 1`).run(scope, now() + milliseconds);
+      ON CONFLICT(key) DO UPDATE SET count = security_limits.count + 1`).run(scope, now() + milliseconds);
     return false;
   }
   function queueLink(user, kind) {

@@ -11,3 +11,9 @@ backend/data/*.sqlite*
 *.log
 .DS_Store
 Thumbs.db
+
+**/.env
+**/.env.*
+**/data
+**/node_modules
+**/dist

@@ -1,4 +1,5 @@
 import './config.js';
+import { openPostgres } from './database/postgres.js';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -13,6 +14,7 @@ export function configuredDatabasePath() {
 }
 
 export function openDatabase(filename = configuredDatabasePath()) {
+  if (process.env.DATABASE_URL && filename !== ":memory:") return openPostgres(process.env.DATABASE_URL);
   if (filename !== ':memory:') mkdirSync(dirname(resolve(filename)), { recursive: true });
   const db = new DatabaseSync(filename);
   db.exec(`
