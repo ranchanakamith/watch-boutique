@@ -32,6 +32,19 @@ const nextBefore = ref<number | null>(null);
 
 // Modal and Edit State
 const isModalOpen = ref(false);
+watch(isModalOpen, (open, _previous, onCleanup) => {
+  if (!open) return;
+  const previousOverflow = document.body.style.overflow;
+  document.body.style.overflow = 'hidden';
+  const onKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape' && !busy.value) closeModal();
+  };
+  document.addEventListener('keydown', onKeydown);
+  onCleanup(() => {
+    document.body.style.overflow = previousOverflow;
+    document.removeEventListener('keydown', onKeydown);
+  });
+});
 const editing = ref<number | null>(null);
 const blank = () => ({
   title: '',
@@ -956,19 +969,20 @@ watch(
       <!-- ============================================== -->
       <!-- MODAL: ADD / EDIT TIMEPIECE                    -->
       <!-- ============================================== -->
-      <div v-if="isModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <Teleport to="body">
+      <div v-if="isModalOpen" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeModal"></div>
 
         <!-- Modal Dialog -->
-        <div class="relative bg-white dark:bg-zinc-900 border border-gray-200 dark:border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl z-10 p-6 md:p-8 animate-fade-in">
+        <div role="dialog" aria-modal="true" aria-labelledby="watch-dialog-title" class="relative bg-white dark:bg-zinc-900 border border-gray-200 dark:border-white/10 rounded-2xl w-full max-w-3xl max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain shadow-2xl z-10 p-6 md:p-8 animate-fade-in">
           <!-- Modal Header -->
           <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-200 dark:border-white/10">
             <div>
               <p class="text-[10px] uppercase tracking-widest text-theme-gold font-semibold">
                 {{ editing ? 'Edit Watch Details' : 'New Collection Addition' }}
               </p>
-              <h2 class="font-serif text-2xl font-light text-gray-900 dark:text-white">
+              <h2 id="watch-dialog-title" class="font-serif text-2xl font-light text-gray-900 dark:text-white">
                 {{ editing ? form.title || 'Edit Timepiece' : 'Add a New Watch' }}
               </h2>
             </div>
@@ -979,6 +993,7 @@ watch(
 
           <!-- Form -->
           <form @submit.prevent="save" class="space-y-6">
+            <p v-if="error" role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- Left Column -->
               <div class="space-y-4">
@@ -1151,6 +1166,7 @@ watch(
           </form>
         </div>
       </div>
+      </Teleport>
     </template>
   </section>
 </template>
