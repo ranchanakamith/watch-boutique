@@ -22,6 +22,7 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       HOST: 0.0.0.0
       PORT: 3000
+      INITIAL_ADMIN_EMAIL: ${INITIAL_ADMIN_EMAIL:-}
       APP_ORIGIN: ${APP_ORIGIN:-http://localhost:8080}
       DATABASE_URL: ${DATABASE_URL:-postgresql://boutique:${POSTGRES_PASSWORD:-boutique-lab-only}@database:5432/boutique}
       ACCOUNT_SECURITY_KEY: ${ACCOUNT_SECURITY_KEY:-}

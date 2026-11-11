@@ -36,6 +36,8 @@ function validateProduct(body) {
 
 export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http://localhost:5173', production = process.env.NODE_ENV === 'production', security = {}, contactSender = createSecuritySender(), contactInbox = process.env.CONTACT_INBOX } = {}) {
   const app = express();
+  // Allow localhost/127.0.0.1 interchangeably outside production for local labs.
+  const allowedOrigins = new Set(production ? [origin] : [origin, origin.replace('//localhost', '//127.0.0.1'), origin.replace('//127.0.0.1', '//localhost')]);
   const accountSecurity = createAccountSecurity(db, { origin, production, sender: createSecuritySender(), ...security });
   app.locals.accountSecurity = accountSecurity;
   const dummyHash = await hashPassword(randomBytes(32).toString('hex'));
@@ -58,7 +60,7 @@ export async function createApp(db, { origin = process.env.APP_ORIGIN || 'http:/
     res.set('Cache-Control', 'no-store');
     // Browser mutations must originate from this application. Non-browser clients may omit Origin.
     if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
-      ((req.headers.origin && req.headers.origin !== origin) || req.headers['sec-fetch-site'] === 'cross-site')) {
+      ((req.headers.origin && !allowedOrigins.has(req.headers.origin)) || req.headers['sec-fetch-site'] === 'cross-site')) {
       return next(fail(403, 'Request origin is not allowed.'));
     }
     next();
